@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "run_id": "634971f5e2ca4bf2b81bcd0885b2f467",
+  "status": "failed",
+  "error_type": "RuntimeError",
+  "error": "injected post-launch failure for cleanup and evidence verification",
+  "owned_processes_reaped": true,
+  "stopped_roles": [
+    "storage_b",
+    "storage_a",
+    "app"
+  ],
+  "run_data_removed": true
+}

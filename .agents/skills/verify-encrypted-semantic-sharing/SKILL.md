@@ -5,7 +5,7 @@ description: Verify SecuShare's encrypted semantic-sharing CLI against an isolat
 
 # Verify encrypted semantic sharing
 
-Status: draft until native Linux CI proves the real app workflow on a host with CGO. Windows unit tests and encoder inference are not substitutes for that proof.
+Native Ubuntu run 39721059173 proved Launch, Doctor, Drive, retained Evidence and Cleanup against the real CGO app and two sidecars. Its synthetic evidence is retained under docs/evidence/linux-39721059173/.
 
 ## Launch
 
@@ -27,6 +27,6 @@ The driver writes its JSON result or failure record under `.agents/evidence/runs
 
 Run `python -m semshare cleanup --run-id <run-id>`. It stops only child PIDs recorded by this run after verifying their identity, waits for exit, removes the scratch database and sidecar data, and leaves evidence intact. CI runs this during normal cleanup and proves the same boundary after its deliberate failure injection.
 
-## Current block
+## Platform limit
 
-This driver has not yet run end-to-end locally: the Windows host's upstream SQLite backend requires CGO, which is unavailable in this task environment. `.github/workflows/semantic-sharing.yml` supplies the native Ubuntu proof; keep this skill marked draft until its workflow artifact records a successful run.
+The Windows host cannot run the upstream SQLite backend without CGO. Use the maintained Ubuntu workflow for the complete app journey; local Windows storage tests alone do not prove that integration.

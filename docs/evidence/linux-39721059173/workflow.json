@@ -1,0 +1,151 @@
+{
+  "api": {
+    "future_revoked_share_http": 410,
+    "guest_sessions": 3,
+    "private_file_denial_http": 403,
+    "public_share_download": "authorized recipient decrypted the synthetic document",
+    "separate_recipient_corpus_records": 1,
+    "share_api_without_fragment_returned_ciphertext_only": true,
+    "share_link_fragment_key_read_client_side": true,
+    "share_link_fragment_key_sent_to_server": false,
+    "uploaded_shared_documents": 3
+  },
+  "completed_at": "2026-10-22T04:16:39.760491+00:00",
+  "data_handling": "All source documents and query are synthetic. Keys and embedding vectors are omitted from evidence.",
+  "documents": [
+    {
+      "downloaded_ciphertext_sha256": "98fbd2e4843e05a90a0c22dc154800e860c417ff1591e871813c6f750478a522",
+      "file_id": "d401ee53-0f41-4255-839d-2a8623a62ff6",
+      "integrity_checks": {
+        "ciphertext_mutation_rejected": true,
+        "nonce_mutation_rejected": true
+      },
+      "plaintext_sha256": "66bdc673226ec695af3bad9bcf6cd02496c5c1a7e4899f0f9bcfd411ba5a77f0",
+      "share_id": "10b30291-2810-4307-bf4a-805c4f173d8e",
+      "synthetic_plaintext_reference": "A customer received reimbursement after the card issuer reversed a duplicate credit card payment.",
+      "synthetic_relevance_label": "refund"
+    },
+    {
+      "downloaded_ciphertext_sha256": "42095182fa44af4a386228064bb83ee05da56c6fe44b7c29993b33a49c540c25",
+      "file_id": "534786ec-725f-467f-ac83-3eeeabe3a8a4",
+      "integrity_checks": {
+        "ciphertext_mutation_rejected": true,
+        "nonce_mutation_rejected": true
+      },
+      "plaintext_sha256": "4c37cecdbc28bff9bcf3125b83cf1415ee9b3546a3bcc983eb95859dc876a687",
+      "share_id": "0aa4096e-21d4-4384-9555-4fa1cd4823bc",
+      "synthetic_plaintext_reference": "The gardening team planted tomatoes in a greenhouse and watered vegetables each morning.",
+      "synthetic_relevance_label": "gardening"
+    },
+    {
+      "downloaded_ciphertext_sha256": "71c880222e9de68ff34f7d646ed017c160e6939f0c6705dde5588a378d38a8d5",
+      "file_id": "cc93d10b-99ad-4a2d-b055-42ccb63c96d2",
+      "integrity_checks": {
+        "ciphertext_mutation_rejected": true,
+        "nonce_mutation_rejected": true
+      },
+      "plaintext_sha256": "6287aef701f9ecb883b2a392b844d9beffceba7062f1bb1327e4f6482d5118ec",
+      "share_id": "30d87859-120c-4098-81ed-f365f3651097",
+      "synthetic_plaintext_reference": "A buyer reported an unauthorized card transaction and the issuing bank reversed the disputed charge.",
+      "synthetic_relevance_label": "disputed-charge"
+    }
+  ],
+  "epoch_merge": {
+    "active_epoch": "e-c62054fbe313467d8b6108b143568996",
+    "merged_records": 3,
+    "previous_epoch": "e-4c3d3106144f4aecb655f3a14433eacb",
+    "previous_epoch_retained": true
+  },
+  "model": {
+    "device": "cpu",
+    "dimension": 384,
+    "id": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+  },
+  "oram": {
+    "bucket_objects_per_sidecar": [
+      75,
+      75
+    ],
+    "delta_deactivated_after_merge": true,
+    "invariants": {
+      "blocks": 3,
+      "capacity": 8,
+      "stash": 0,
+      "valid": true
+    },
+    "requests_per_sidecar": [
+      262,
+      262
+    ],
+    "same_size_read_message_bytes_by_sidecar": [
+      [
+        12,
+        66304,
+        66304
+      ],
+      [
+        12,
+        66304,
+        66304
+      ]
+    ],
+    "same_size_reads_observed_equal_shape": true,
+    "shape": {
+      "bucket_bytes": 16576,
+      "bucket_slots": 4,
+      "height": 3,
+      "path_nodes": 4,
+      "revision": 5
+    }
+  },
+  "run_id": "634971f5e2ca4bf2b81bcd0885b2f467",
+  "schema": 1,
+  "semantic_search": {
+    "fresh_plaintext_cosine_oracle": [
+      {
+        "label": "refund",
+        "score": 0.5930394595944818
+      },
+      {
+        "label": "disputed-charge",
+        "score": 0.49137410359296124
+      },
+      {
+        "label": "gardening",
+        "score": -0.07973199055155743
+      }
+    ],
+    "ranked_labels": [
+      "refund",
+      "disputed-charge",
+      "gardening"
+    ],
+    "ranked_references": [
+      "d401ee53-0f41-4255-839d-2a8623a62ff6:10b30291-2810-4307-bf4a-805c4f173d8e",
+      "cc93d10b-99ad-4a2d-b055-42ccb63c96d2:30d87859-120c-4098-81ed-f365f3651097",
+      "534786ec-725f-467f-ac83-3eeeabe3a8a4:0aa4096e-21d4-4384-9555-4fa1cd4823bc"
+    ],
+    "ranking_agrees_with_oracle": true,
+    "recall_at_1_for_synthetic_refund_label": 1.0,
+    "scores_agree_with_oracle_within_1e-6": true,
+    "synthetic_corpus_size": 3,
+    "synthetic_query": "refund for a card payment",
+    "top_reference": "d401ee53-0f41-4255-839d-2a8623a62ff6:10b30291-2810-4307-bf4a-805c4f173d8e",
+    "top_score": 0.5930394595944818
+  },
+  "session_visibility": {
+    "authorized_recipient_records": 1,
+    "one_authorized_share_imported": true,
+    "other_session_records_after_investigation_merge": 0,
+    "recipient_ciphertext_integrity_checks": {
+      "ciphertext_mutation_rejected": true,
+      "nonce_mutation_rejected": true
+    },
+    "unmerged_other_session_records": 0
+  },
+  "status": "passed",
+  "storage": {
+    "same_shape": true,
+    "sidecars": 2
+  }
+}

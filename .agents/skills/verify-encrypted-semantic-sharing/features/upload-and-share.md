@@ -28,4 +28,4 @@ Preconditions:
 
 - The upstream API stores the original filename, MIME type, and sizes as metadata; this workflow does not hide those fields.
 - Share access is still governed by the upstream app and its guest session. Do not bypass authentication or authorization.
-- Local proof requires Linux/CGO for the upstream SQLite driver. Keep this map in draft until the Ubuntu workflow passes and its evidence artifact is inspected.
+- Local proof requires Linux/CGO for the upstream SQLite driver. Native run 39721059173 passed this path; retained evidence is under docs/evidence/linux-39721059173/.

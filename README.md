@@ -18,7 +18,7 @@ python -m semshare drive --run-id <printed-run-id>
 python -m semshare cleanup --run-id <printed-run-id>
 ```
 
-The deterministic storage and session tests run with `python -m unittest discover -s research/semantic-sharing/tests -v` after installation. Native Linux integration is being verified in the [research workflow](.github/workflows/semantic-sharing.yml); local storage tests alone do not establish a complete app result.
+The deterministic storage and session tests run with `python -m unittest discover -s research/semantic-sharing/tests -v` after installation. The [native Ubuntu workflow](https://github.com/STEVVVU/encrypted-semantic-file-sharing/actions/runs/39721059173) passed frontend lint/tests/build, backend native race tests, 22 research tests, and the complete app/sidecar journey. [Retained synthetic evidence](docs/evidence/linux-39721059173/) records three encrypted uploads, recipient isolation, HTTP 403 private-file denial, HTTP 410 after revocation, cosine-ranking agreement, ORAM invariants and owned-process cleanup. The original workflow evidence uses `model.id` for the pinned revision hash; the model identity is the locked MiniLM model described above.
 
 ## Trust and scope
 
