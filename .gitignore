@@ -60,3 +60,4 @@ sample.bat
 __pycache__/
 *.pyc
 *.egg-info/
+/.agents/metrics-model-cache/

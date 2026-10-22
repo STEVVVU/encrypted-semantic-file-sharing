@@ -6,3 +6,4 @@ The driver passed native Ubuntu run 39721059173 against the real app and sidecar
 - [Authorize, import, and revoke a share](./share-authorization.md)
 - [Search the current session](./semantic-search.md)
 - [Merge a session into a new epoch](./epoch-merge.md)
+- [Measure synthetic corpus scaling and exact ranking overhead](./metrics.md)

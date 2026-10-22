@@ -5,6 +5,8 @@ description: Verify SecuShare's encrypted semantic-sharing CLI against an isolat
 
 # Verify encrypted semantic sharing
 
+Use [features/metrics.md](features/metrics.md) for the maintained corpus, baseline, measurement and resource limits. The manual `metrics.yml` workflow runs this benchmark on an isolated Ubuntu runner.
+
 Native Ubuntu run 39721059173 proved Launch, Doctor, Drive, retained Evidence and Cleanup against the real CGO app and two sidecars. Its synthetic evidence is retained under docs/evidence/linux-39721059173/.
 
 ## Launch
