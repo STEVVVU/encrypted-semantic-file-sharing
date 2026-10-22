@@ -103,7 +103,7 @@ def drive(run_id: str, cache: Path) -> dict:
         ((reference, label, cosine(query_vector, vector)) for reference, label, vector in oracle_inputs),
         key=lambda item: (-item[2], item[0]),
     )
-    rankings_agree = [item[0] for item in delta_results] == [item[0] for item in oracle_results]
+    rankings_agree = [item["reference"] for item in delta_results] == [item[0] for item in oracle_results]
     scores_agree = all(
         abs(result["score"] - oracle[2]) <= 1e-6
         for result, oracle in zip(delta_results, oracle_results, strict=True)
