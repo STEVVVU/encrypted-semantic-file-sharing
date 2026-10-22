@@ -22,7 +22,21 @@ The deterministic storage and session tests run with `python -m unittest discove
 
 ## Trust and scope
 
-The manual [metrics workflow](.github/workflows/metrics.yml) runs the [frozen synthetic corpus benchmark](.agents/skills/verify-encrypted-semantic-sharing/features/metrics.md). Reproduce it with `python -m semshare.benchmark --run-id <fresh-id> --cache-dir <isolated-model-cache>`. It compares exact plaintext ranking with encrypted delta and merged searches at 8, 32 and 64 records, retains held-out relevance labels, and checks every result. Full hosted measurements are pending; functional checks above are not performance results.
+The [hosted metrics run](https://github.com/STEVVVU/encrypted-semantic-file-sharing/actions/runs/39733590445) completed the [frozen corpus benchmark](.agents/skills/verify-encrypted-semantic-sharing/features/metrics.md) at source `e49209b`, using a four-vCPU Ubuntu runner, Python 3.11 and pinned CPU MiniLM revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41`. Four manually labeled paraphrase queries were repeated five times per cell, alternating encrypted/plaintext order. Every top-five reference and score matched exact float32-vector ranking. Search medians below are medians of the five per-repeat medians, with their range; query embedding is excluded.
+
+| Records | Plain exact, delta / merged (ms) | Encrypted delta (s) | Encrypted merged (s) |
+|---:|---:|---:|---:|
+| 8 | 1.138 / 1.144 | 0.216 [0.212–0.217] | 0.212 [0.212–0.215] |
+| 32 | 4.475 / 4.448 | 1.279 [1.270–1.302] | 1.287 [1.277–1.305] |
+| 64 | 8.884 / 8.795 | 2.976 [2.955–3.016] | 3.001 [2.936–3.228] |
+
+The plaintext path is an overhead floor that omits encryption, ORAM, network and durability. Warm query embedding took about 10 ms; at 64 records merged-search empirical p95 was 3.361 s across 20 queries. Four-query synthetic relevance had MRR/nDCG@5 1.0; precision@5 was 0.2/0.8/1.0 and recall@5 1.0/1.0/0.625 at 8/32/64 records. At 64 records there are eight same-topic documents, so top five can recover at most 5/8. These labels do not establish general document-search quality.
+
+Scheduled rates 0.25/1/4 queries/s with worker limits 1/2/4 completed all 520 requests, with zero errors, rejections or timeouts. Median completed rates were **0.252/0.336/0.340 queries/s**. The overloaded 1/s and 4/s batches had per-run p95 ranges **61.4–65.5 s** and **102.0–105.4 s**, including queued time. Finite backlog completion is not sustainable 4/s capacity. A separate 61.4-second closed-loop stability check completed 21 correct searches. Per-cell p99 is omitted because there were fewer than 100 observations.
+
+The separate profile attributes the 64-record path to 64 serial ORAM reads/path commits and 2,688 sidecar requests under the trusted-client lock. Each query sent and received 14,852,096 payload bytes; headers/framing are excluded. Client peak RSS was 478,284 KiB. Before load testing, aggregate retained-index sidecar storage was 20,388,480 bytes across all three corpus workspaces and their retained epoch/delta trees, versus 7,744 unique uploaded plaintext bytes. This is not active-corpus storage amplification: superseded path buckets are deleted after durable commit, while whole old index generations remain.
+
+[Curated cells, counts, hashes and limits](docs/evidence/metrics-39733590445/measurement.json) bind these results to the raw workflow artifact; cleanup stopped all three owned processes and removed scratch data. Reproduce with `python -m semshare.benchmark --run-id <fresh-id> --cache-dir <isolated-model-cache>` or the manual [metrics workflow](.github/workflows/metrics.yml). Ingest was one unreplicated 64-document pass at one document per 4.2 seconds, below the shipped file-request limiter; its success is not an upload-capacity measurement or a formal privacy result.
 
 This is a trusted-client research prototype. It implements a position map, stash, random leaf remapping, padded encrypted buckets and path eviction, with bounded indexes of 64 records. Searches scan those bounded indexes; this is not a scalable private approximate-nearest-neighbor service. Session names separate views inside one trusted client, while separate workspace keys define separate client corpora.
 

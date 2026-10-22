@@ -1,0 +1,1334 @@
+{
+  "artifact_expanded_bytes": 83706341,
+  "artifact_zip_sha256": "26e1daee54f6d5c0fc1a000b61c3e6aa7e01c2e78da007402181b92d1431e291",
+  "build_merge_single_samples": [
+    {
+      "kind": "index_build",
+      "records": 8,
+      "seconds": 0.28972830500003965,
+      "size": 8
+    },
+    {
+      "kind": "merge",
+      "seconds": 0.25892505500002017,
+      "size": 8
+    },
+    {
+      "kind": "index_build",
+      "records": 32,
+      "seconds": 1.6221718610000266,
+      "size": 32
+    },
+    {
+      "kind": "merge",
+      "seconds": 1.4464421870000024,
+      "size": 32
+    },
+    {
+      "kind": "index_build",
+      "records": 64,
+      "seconds": 3.7488329340000064,
+      "size": 64
+    },
+    {
+      "kind": "merge",
+      "seconds": 3.302016717000015,
+      "size": 64
+    }
+  ],
+  "claim_limits": [
+    "Synthetic eight-topic corpus, four manually labeled paraphrase queries; no general relevance claim",
+    "Trusted-client lock serializes full ORAM scans; finite scheduled client queues are not sustainable service-rate capacity",
+    "No stable p99: each outcome cell has fewer than 100 samples",
+    "Plaintext ranking floor excludes privacy, network and durability",
+    "Loopback sidecars do not prove non-collusion, MPC or formal privacy"
+  ],
+  "cleanup": {
+    "run_data_removed": true,
+    "run_id": "ee82c979cc2a51430c9525ba5aed5753",
+    "stopped": [
+      "storage_b",
+      "storage_a",
+      "app"
+    ]
+  },
+  "comparison": [
+    {
+      "max_seconds": 0.0016900550000400472,
+      "median_repeat_seconds": 0.0011383494999961385,
+      "median_seconds": 0.0011364559999833546,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.0010974679999549153,
+      "p50_seconds": 0.0011324939999894923,
+      "p95_seconds": 0.001679725000030885,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.0016711045000192826,
+        0.0011383494999961385,
+        0.001136616500019727,
+        0.0011477519999800734,
+        0.0011217539999961446
+      ],
+      "phase": "delta",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        0.0011217539999961446,
+        0.0016711045000192826
+      ],
+      "range_seconds": [
+        0.0010974679999549153,
+        0.0016900550000400472
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "plaintext_exact",
+      "size": 8
+    },
+    {
+      "max_seconds": 0.22011521799998945,
+      "median_repeat_seconds": 0.21572201800000812,
+      "median_seconds": 0.21569756100001314,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.21009457999997494,
+      "p50_seconds": 0.2155358539999952,
+      "p95_seconds": 0.2197208700000033,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.21622146550001276,
+        0.21572201800000812,
+        0.21212243750002813,
+        0.21659170899999936,
+        0.21522218499998758
+      ],
+      "phase": "delta",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        0.21212243750002813,
+        0.21659170899999936
+      ],
+      "range_seconds": [
+        0.21009457999997494,
+        0.22011521799998945
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "encrypted",
+      "size": 8
+    },
+    {
+      "max_seconds": 0.0016850960000169835,
+      "median_repeat_seconds": 0.0011441800000113744,
+      "median_seconds": 0.001137964000008651,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.0011044220000258065,
+      "p50_seconds": 0.0011348580000003494,
+      "p95_seconds": 0.0016735629999971025,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.001133049499998151,
+        0.001152370499994504,
+        0.0011093249999873933,
+        0.0011451020000095014,
+        0.0011441800000113744
+      ],
+      "phase": "merged",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        0.0011093249999873933,
+        0.001152370499994504
+      ],
+      "range_seconds": [
+        0.0011044220000258065,
+        0.0016850960000169835
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "plaintext_exact",
+      "size": 8
+    },
+    {
+      "max_seconds": 0.22030195600001434,
+      "median_repeat_seconds": 0.21213910200000896,
+      "median_seconds": 0.21260823450000998,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.20864320299995143,
+      "p50_seconds": 0.21260244399996964,
+      "p95_seconds": 0.21872065700000576,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.21538584750001633,
+        0.21213434800003483,
+        0.2149794075000102,
+        0.21213910200000896,
+        0.21166835049999122
+      ],
+      "phase": "merged",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        0.21166835049999122,
+        0.21538584750001633
+      ],
+      "range_seconds": [
+        0.20864320299995143,
+        0.22030195600001434
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "encrypted",
+      "size": 8
+    },
+    {
+      "max_seconds": 0.00499178600000505,
+      "median_repeat_seconds": 0.00447456849997252,
+      "median_seconds": 0.004479876999994303,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.00439528499998687,
+      "p50_seconds": 0.0044767750000005435,
+      "p95_seconds": 0.00488819100002047,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.0044586060000142425,
+        0.004455675499997369,
+        0.004474912999995695,
+        0.004507101000001512,
+        0.00447456849997252
+      ],
+      "phase": "delta",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.8,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        0.004455675499997369,
+        0.004507101000001512
+      ],
+      "range_seconds": [
+        0.00439528499998687,
+        0.00499178600000505
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "plaintext_exact",
+      "size": 32
+    },
+    {
+      "max_seconds": 1.318348589999971,
+      "median_repeat_seconds": 1.2793683955000006,
+      "median_seconds": 1.2818579074999832,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 1.245318688999987,
+      "p50_seconds": 1.2814162139999894,
+      "p95_seconds": 1.3088851360000149,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        1.2841551419999746,
+        1.2793683955000006,
+        1.2698195450000185,
+        1.3024682814999835,
+        1.2767619340000067
+      ],
+      "phase": "delta",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.8,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        1.2698195450000185,
+        1.3024682814999835
+      ],
+      "range_seconds": [
+        1.245318688999987,
+        1.318348589999971
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "encrypted",
+      "size": 32
+    },
+    {
+      "max_seconds": 0.004526588999965497,
+      "median_repeat_seconds": 0.0044475665000334175,
+      "median_seconds": 0.0044475665000334175,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.004382187999965481,
+      "p50_seconds": 0.004443058000049405,
+      "p95_seconds": 0.00452616699999453,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.0044475665000334175,
+        0.004478403000007347,
+        0.004435026999999536,
+        0.0044562829999961195,
+        0.0044196190000036495
+      ],
+      "phase": "merged",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.8,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        0.0044196190000036495,
+        0.004478403000007347
+      ],
+      "range_seconds": [
+        0.004382187999965481,
+        0.004526588999965497
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "plaintext_exact",
+      "size": 32
+    },
+    {
+      "max_seconds": 1.3563416700000062,
+      "median_repeat_seconds": 1.2869721805000154,
+      "median_seconds": 1.2856738925000286,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 1.2662152870000227,
+      "p50_seconds": 1.2852497350000363,
+      "p95_seconds": 1.3186224450000168,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        1.2892277539999952,
+        1.3046283890000154,
+        1.2772101104999933,
+        1.2869721805000154,
+        1.2782312845000376
+      ],
+      "phase": "merged",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 0.8,
+        "recall_at_5": 1
+      },
+      "range_repeat_seconds": [
+        1.2772101104999933,
+        1.3046283890000154
+      ],
+      "range_seconds": [
+        1.2662152870000227,
+        1.3563416700000062
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "encrypted",
+      "size": 32
+    },
+    {
+      "max_seconds": 0.009265922000054161,
+      "median_repeat_seconds": 0.008883875500032445,
+      "median_seconds": 0.00882551649999641,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.008709302999932333,
+      "p50_seconds": 0.008824829999980466,
+      "p95_seconds": 0.009144569999989471,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.008801870500008135,
+        0.008920199000016282,
+        0.008970689499960827,
+        0.008883875500032445,
+        0.008798019500034115
+      ],
+      "phase": "delta",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 1,
+        "recall_at_5": 0.625
+      },
+      "range_repeat_seconds": [
+        0.008798019500034115,
+        0.008970689499960827
+      ],
+      "range_seconds": [
+        0.008709302999932333,
+        0.009265922000054161
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "plaintext_exact",
+      "size": 64
+    },
+    {
+      "max_seconds": 3.0427618829999687,
+      "median_repeat_seconds": 2.9755310365000014,
+      "median_seconds": 2.981523043499976,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 2.9199489119999953,
+      "p50_seconds": 2.978362113000003,
+      "p95_seconds": 3.033776251000006,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        3.0161885175000123,
+        3.0103991194999935,
+        2.968559545000005,
+        2.9755310365000014,
+        2.9548922464999805
+      ],
+      "phase": "delta",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 1,
+        "recall_at_5": 0.625
+      },
+      "range_repeat_seconds": [
+        2.9548922464999805,
+        3.0161885175000123
+      ],
+      "range_seconds": [
+        2.9199489119999953,
+        3.0427618829999687
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "encrypted",
+      "size": 64
+    },
+    {
+      "max_seconds": 0.00902287899998555,
+      "median_repeat_seconds": 0.00879502900005491,
+      "median_seconds": 0.008833400500009247,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 0.008732839000003878,
+      "p50_seconds": 0.008828798999957144,
+      "p95_seconds": 0.00899777200004337,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        0.00879502900005491,
+        0.008884197500037772,
+        0.008792740499984575,
+        0.008930179499998303,
+        0.008766740499993375
+      ],
+      "phase": "merged",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 1,
+        "recall_at_5": 0.625
+      },
+      "range_repeat_seconds": [
+        0.008766740499993375,
+        0.008930179499998303
+      ],
+      "range_seconds": [
+        0.008732839000003878,
+        0.00902287899998555
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "plaintext_exact",
+      "size": 64
+    },
+    {
+      "max_seconds": 3.4334636349999528,
+      "median_repeat_seconds": 3.001095165000038,
+      "median_seconds": 2.9875585875000183,
+      "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "min_seconds": 2.9317411300000913,
+      "p50_seconds": 2.9825236489999725,
+      "p95_seconds": 3.360644148999995,
+      "p99_seconds": null,
+      "per_repeat_medians_seconds": [
+        2.9875585875000183,
+        3.001095165000038,
+        3.2281550794999703,
+        3.047902196500047,
+        2.9364167789999556
+      ],
+      "phase": "merged",
+      "quality_mean": {
+        "mrr": 1,
+        "ndcg_at_5": 1,
+        "precision_at_5": 1,
+        "recall_at_5": 0.625
+      },
+      "range_repeat_seconds": [
+        2.9364167789999556,
+        3.2281550794999703
+      ],
+      "range_seconds": [
+        2.9317411300000913,
+        3.4334636349999528
+      ],
+      "repeats": 5,
+      "samples": 20,
+      "side": "encrypted",
+      "size": 64
+    }
+  ],
+  "environment": {
+    "baseline_scope": "same float32 vectors and exact cosine ranking in trusted client; excludes encryption/ORAM/network/durability",
+    "cache": "hash-checked pinned CPU encoder; one unreported warmup; warm in-memory plaintext vectors and warm sidecar OS cache",
+    "cpu_count": 4,
+    "load_average": [
+      2.09521484375,
+      0.8505859375,
+      0.31640625
+    ],
+    "model_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.11.17 (main, Oct  1 2026, 14:32:31) [GCC 13.3.0]",
+    "source_sha": "e49209bc3bc09c9095fcc9061907ec78efe7d120",
+    "thread_environment": {
+      "MKL_NUM_THREADS": "2",
+      "OMP_NUM_THREADS": "2",
+      "TOKENIZERS_PARALLELISM": "false"
+    }
+  },
+  "load_cells": [
+    {
+      "completed": 32,
+      "concurrency": 1,
+      "elapsed_seconds": 127.00500766300001,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 3.3254738620000808,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.9176600440000584,
+          "p50_seconds": 2.960192277000033,
+          "p95_seconds": 3.2480246250000846,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 0.25,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 0,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 1,
+      "elapsed_seconds": 126.97448905499994,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 3.0261746989999665,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.898976069000014,
+          "p50_seconds": 2.9364880969999376,
+          "p95_seconds": 2.998742383999911,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 0.25,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 1,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 1,
+      "elapsed_seconds": 126.94652278000001,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 3.000124610999933,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.9076091339999266,
+          "p50_seconds": 2.9386589900000217,
+          "p95_seconds": 2.996923381999977,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 0.25,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 2,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 1,
+      "elapsed_seconds": 126.96421767300001,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 3.0685923790000516,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.92124504100002,
+          "p50_seconds": 2.956624464000015,
+          "p95_seconds": 3.008185641000182,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 0.25,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 3,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 1,
+      "elapsed_seconds": 126.96847513800003,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 3.025690025000131,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.908381469999995,
+          "p50_seconds": 2.938724690000072,
+          "p95_seconds": 2.9936822810000194,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 0.25,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 4,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 2,
+      "elapsed_seconds": 96.27027382699998,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 65.27012720500011,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.966501931000039,
+          "p50_seconds": 32.07184551099999,
+          "p95_seconds": 63.31496679099996,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 1,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 0,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 2,
+      "elapsed_seconds": 94.32677735300013,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 63.32659649700008,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.906416424000099,
+          "p50_seconds": 32.08103959799996,
+          "p95_seconds": 61.391376143000116,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 1,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 1,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 2,
+      "elapsed_seconds": 98.6414671529999,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 67.64124616000004,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.951011281999854,
+          "p50_seconds": 32.49634934599999,
+          "p95_seconds": 65.47761952199994,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 1,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 2,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 2,
+      "elapsed_seconds": 95.35679027899982,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 64.35660591099986,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 3.074272555999869,
+          "p50_seconds": 33.53743934699992,
+          "p95_seconds": 62.433264522999934,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 1,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 3,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 32,
+      "concurrency": 2,
+      "elapsed_seconds": 94.47153135999997,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 63.47136614899978,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.9345025379998333,
+          "p50_seconds": 32.122152856999946,
+          "p95_seconds": 61.5271497939998,
+          "p99_seconds": null,
+          "samples": 32
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 32,
+      "offered_rate": 1,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 4,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 40,
+      "concurrency": 4,
+      "elapsed_seconds": 120.56432739600018,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 110.81402571700005,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.984387548000086,
+          "p50_seconds": 54.40967327900012,
+          "p95_seconds": 105.38439807300006,
+          "p99_seconds": null,
+          "samples": 40
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 40,
+      "offered_rate": 4,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 0,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 40,
+      "concurrency": 4,
+      "elapsed_seconds": 117.9399908979999,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 108.18965003899984,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 3.056713501999866,
+          "p50_seconds": 54.6664643539998,
+          "p95_seconds": 102.80373415199983,
+          "p99_seconds": null,
+          "samples": 40
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 40,
+      "offered_rate": 4,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 1,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 40,
+      "concurrency": 4,
+      "elapsed_seconds": 117.11907473700012,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 107.36877000899995,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.9241250130000935,
+          "p50_seconds": 53.57423296000002,
+          "p95_seconds": 101.96953028400003,
+          "p99_seconds": null,
+          "samples": 40
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 40,
+      "offered_rate": 4,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 2,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 40,
+      "concurrency": 4,
+      "elapsed_seconds": 117.72023567399992,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 107.96997077800006,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.8895466730000408,
+          "p50_seconds": 53.73122186899991,
+          "p95_seconds": 102.63705855699982,
+          "p99_seconds": null,
+          "samples": 40
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 40,
+      "offered_rate": 4,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 3,
+      "size": 64,
+      "timeouts": 0
+    },
+    {
+      "completed": 40,
+      "concurrency": 4,
+      "elapsed_seconds": 117.07706275800001,
+      "errors": 0,
+      "kind": "scheduled_load",
+      "latency_by_outcome": {
+        "completed": {
+          "max_seconds": 107.32678271300028,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": 2.9216454630000044,
+          "p50_seconds": 53.804111231000206,
+          "p95_seconds": 101.98430875400027,
+          "p99_seconds": null,
+          "samples": 40
+        },
+        "errors": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        },
+        "rejected": {
+          "max_seconds": null,
+          "method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+          "min_seconds": null,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "p99_seconds": null,
+          "samples": 0
+        }
+      },
+      "offered": 40,
+      "offered_rate": 4,
+      "phase": "merged",
+      "rejected": 0,
+      "repeat": 4,
+      "size": 64,
+      "timeouts": 0
+    }
+  ],
+  "load_throughput": [
+    {
+      "concurrency": 1,
+      "median_completed_per_second": 0.25203106491764754,
+      "offered_rate": 0.25,
+      "range_completed_per_second": [
+        0.2519585691054799,
+        0.25207464764873017
+      ]
+    },
+    {
+      "concurrency": 2,
+      "median_completed_per_second": 0.3355817651409275,
+      "offered_rate": 1,
+      "range_completed_per_second": [
+        0.3244071780721361,
+        0.3392461917812166
+      ]
+    },
+    {
+      "concurrency": 4,
+      "median_completed_per_second": 0.33978865036229733,
+      "offered_rate": 4,
+      "range_completed_per_second": [
+        0.33177309461212184,
+        0.34165530854391674
+      ]
+    }
+  ],
+  "load_totals": {
+    "completed": 520,
+    "errors": 0,
+    "offered": 520,
+    "rejected": 0,
+    "timeouts": 0
+  },
+  "max_client_peak_rss_kib": 478284,
+  "network": [
+    {
+      "messages_per_query": [
+        192
+      ],
+      "received_payload_bytes": [
+        1060864
+      ],
+      "sent_payload_bytes": [
+        1060864
+      ],
+      "size": 8
+    },
+    {
+      "messages_per_query": [
+        1152
+      ],
+      "received_payload_bytes": [
+        6365184
+      ],
+      "sent_payload_bytes": [
+        6365184
+      ],
+      "size": 32
+    },
+    {
+      "messages_per_query": [
+        2688
+      ],
+      "received_payload_bytes": [
+        14852096
+      ],
+      "sent_payload_bytes": [
+        14852096
+      ],
+      "size": 64
+    }
+  ],
+  "raw_file_sha256": {
+    "app.log": "70b1c9c1a7a9c1f1c83d30f9074b951e9640873af99acf89635576142ab77500",
+    "benchmark-cleanup.json": "2f6e5e9b14edeefaf00ad7fe9a6c57afe8b8cdf3a3aecf1fafefe341595c4f4c",
+    "environment.json": "e912d1952c2ba07479ab793eb87b599a508b3e85431a603b719634ee9712566d",
+    "samples.json": "2fead641804aac6a1e836209c99376e13bd6f834a5d7c651090a60d41922ae06",
+    "search-32-profile.txt": "da40e5bdd4880a148b46871a1824446dc6a7ae4243e610da07b4ca904047351c",
+    "search-32.prof": "9d6eb3785ae53489ebf2e0b0e0de2ca3ef30d34b233848f90321b6ea68a4327d",
+    "search-64-profile.txt": "98d1f3e3872a2d30dbc752c38e49d0355655119ce7b291a6f72d9c2b0c2a3338",
+    "search-64.prof": "e82535b99bfbdc1e57646d88cb39cf7f51c83edbf8e2656c075e7235a8d30700",
+    "search-8-profile.txt": "d1e61a55f6a0070f8c5c4bce0e62cb883affc38c9ab4d7bbc1195772d39d0845",
+    "search-8.prof": "67a8b21078b444dd1ac0b681e607218ffed1dba58277ad62de894da833a06568",
+    "storage-a.log": "04c60442a6d3fe9c1c051b434917371938a0da8040a290b7c0fcefc6a635bc86",
+    "storage-b.log": "04c60442a6d3fe9c1c051b434917371938a0da8040a290b7c0fcefc6a635bc86",
+    "summary.json": "e0ef6ca2cea32a02c3206202d759ef2039eb59651782580110adae36076da6ec",
+    "uploads.json": "9ea825a03a6550a69004d6086955b16aa959760a85e0ad9d2d49f6d5c466f50c",
+    "workload.json": "2f0680686865a9b728881e3ebce609d44bee338ab48dd3b07668ca71326963ab"
+  },
+  "run_url": "https://github.com/STEVVVU/encrypted-semantic-file-sharing/actions/runs/39733590445",
+  "stability": {
+    "completed": 21,
+    "duration_seconds": 61.4306949920001,
+    "errors": 0,
+    "kind": "stability",
+    "offered": 21,
+    "policy": "closed-loop one outstanding trusted-client query",
+    "resources": {
+      "client_cpu_seconds": 1040.127044,
+      "client_peak_rss_kib": 478284,
+      "owned_process_rss_kib": {
+        "app": 30448,
+        "storage_a": 21188,
+        "storage_b": 21208
+      }
+    }
+  },
+  "storage_scope_correction": "Historical raw scope text incorrectly says no garbage collection. Superseded path buckets are deleted after durable save; aggregate snapshots retain whole old epoch/delta trees and all three corpus workspaces. Not active-corpus storage or all historical write bytes. Snapshots precede scheduled load.",
+  "storage_snapshots": [
+    {
+      "cumulative_sidecar_amplification_over_unique_uploaded_plaintext": 128.4297520661157,
+      "cumulative_sidecar_bytes": 994560,
+      "kind": "storage",
+      "logical_plaintext_bytes_current_corpus": 968,
+      "phase": "delta",
+      "scope": "cumulative immutable buckets including all prior corpora/revisions; no garbage collection",
+      "size": 8
+    },
+    {
+      "cumulative_sidecar_amplification_over_unique_uploaded_plaintext": 192.64462809917356,
+      "cumulative_sidecar_bytes": 1491840,
+      "kind": "storage",
+      "logical_plaintext_bytes_current_corpus": 968,
+      "phase": "merged",
+      "scope": "cumulative immutable buckets including all prior corpora/revisions; no garbage collection",
+      "size": 8
+    },
+    {
+      "cumulative_sidecar_amplification_over_unique_uploaded_plaintext": 732.0495867768595,
+      "cumulative_sidecar_bytes": 5668992,
+      "kind": "storage",
+      "logical_plaintext_bytes_current_corpus": 3872,
+      "phase": "delta",
+      "scope": "cumulative immutable buckets including all prior corpora/revisions; no garbage collection",
+      "size": 32
+    },
+    {
+      "cumulative_sidecar_amplification_over_unique_uploaded_plaintext": 1001.7520661157025,
+      "cumulative_sidecar_bytes": 7757568,
+      "kind": "storage",
+      "logical_plaintext_bytes_current_corpus": 3872,
+      "phase": "merged",
+      "scope": "cumulative immutable buckets including all prior corpora/revisions; no garbage collection",
+      "size": 32
+    },
+    {
+      "cumulative_sidecar_amplification_over_unique_uploaded_plaintext": 2089.123966942149,
+      "cumulative_sidecar_bytes": 16178176,
+      "kind": "storage",
+      "logical_plaintext_bytes_current_corpus": 7744,
+      "phase": "delta",
+      "scope": "cumulative immutable buckets including all prior corpora/revisions; no garbage collection",
+      "size": 64
+    },
+    {
+      "cumulative_sidecar_amplification_over_unique_uploaded_plaintext": 2632.809917355372,
+      "cumulative_sidecar_bytes": 20388480,
+      "kind": "storage",
+      "logical_plaintext_bytes_current_corpus": 7744,
+      "phase": "merged",
+      "scope": "cumulative immutable buckets including all prior corpora/revisions; no garbage collection",
+      "size": 64
+    }
+  ],
+  "upload": {
+    "app_traffic": {
+      "http_errors": 0,
+      "received_body_bytes": 58472,
+      "requests": 193,
+      "sent_body_bytes": 72130
+    },
+    "offered_documents_per_second": 0.23809523809523808,
+    "timing_scope": "one upload/share/download/decrypt/embed per distinct document; scheduled below shipped 30 file requests/minute limit; not a repeated ingest comparison"
+  },
+  "upload_count": 64,
+  "workload_sha256": "c0c512753f4736a787462ed175afff0cea3999c7e36b5d97b6d4c1da0d6975eb"
+}

@@ -185,7 +185,7 @@ def drive(state, cache, smoke):
             samples.append({"kind": "storage", "size": size, "phase": phase, "cumulative_sidecar_bytes": stored,
                             "logical_plaintext_bytes_current_corpus": sum(len(d["text"].encode()) for d in source_documents[:size]),
                             "cumulative_sidecar_amplification_over_unique_uploaded_plaintext": stored / sum(len(d["text"].encode()) for d in source_documents),
-                            "scope": "cumulative immutable buckets including all prior corpora/revisions; no garbage collection"})
+                            "scope": "aggregate live sidecar files across all corpus workspaces and retained epoch/delta trees; superseded path buckets are deleted after durable commit; not active-corpus storage or cumulative write bytes"})
         profiler = cProfile.Profile()
         profiled = profiler.runcall(workspace.search, "metrics", vector, 5)
         profiler.dump_stats(str(evidence / f"search-{size}.prof"))
