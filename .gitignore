@@ -51,3 +51,12 @@ backend/.golangci.v1tmp.yml
 backend/.golangci.v1tmp.bck.yml
 backend/.golangci.migrated.yml
 sample.bat
+
+# P28 isolated verification tools and evidence
+/.venv/
+/.agents/model-cache/
+/.agents/evidence/runs/
+/.agents/run-data/
+__pycache__/
+*.pyc
+*.egg-info/

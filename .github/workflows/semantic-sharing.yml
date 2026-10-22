@@ -1,0 +1,114 @@
+name: Semantic sharing research client
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "research/semantic-sharing/**"
+      - ".github/workflows/semantic-sharing.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "backend/**"
+      - "research/semantic-sharing/**"
+      - ".github/workflows/semantic-sharing.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24.19.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+  local-integration-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: "1.27.3"
+          cache-dependency-path: backend/go.sum
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: research/semantic-sharing/requirements.txt
+
+      - name: Run upstream backend tests with native CGO SQLite
+        working-directory: backend
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          go test ./...
+          go test -race ./...
+
+      - name: Install isolated research client dependencies
+        run: |
+          python -m pip install --disable-pip-version-check torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --disable-pip-version-check -r research/semantic-sharing/requirements.txt
+          python -m pip install --disable-pip-version-check -e research/semantic-sharing --no-deps
+
+      - name: Run storage, session, and epoch tests
+        run: python -m unittest discover -s research/semantic-sharing/tests -v
+
+      - name: Fetch and hash-check the pinned model
+        run: python -m semshare download-model --cache-dir .agents/model-cache
+
+      - name: Launch the real SecuShare API and two sidecars
+        id: launch
+        run: |
+          run_id=$(python -c 'import uuid; print(uuid.uuid4().hex)')
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          python -m semshare launch --run-id "$run_id" > .agents-launch.json
+
+      - name: Check exact owned processes and services
+        run: python -m semshare doctor --run-id "${{ steps.launch.outputs.run_id }}"
+
+      - name: Drive encrypted upload, semantic search, and epoch merge
+        run: python -m semshare drive --run-id "${{ steps.launch.outputs.run_id }}" --cache-dir .agents/model-cache
+
+      - name: Inject post-launch failure and prove owned-process cleanup
+        if: always() && steps.launch.outputs.run_id != ''
+        run: |
+          if python -m semshare inject-failure --run-id "${{ steps.launch.outputs.run_id }}"; then
+            echo "failure injection unexpectedly succeeded" >&2
+            exit 1
+          else
+            status=$?
+            test "$status" -eq 1
+          fi
+          python -c 'import json,sys; p=".agents/evidence/runs/"+sys.argv[1]+"/failure.json"; d=json.load(open(p)); assert d["status"] == "failed" and d["owned_processes_reaped"] and d["run_data_removed"]' "${{ steps.launch.outputs.run_id }}"
+
+      - name: Clean only the owned app and sidecar processes after a failed prior step
+        if: always() && steps.launch.outputs.run_id != ''
+        run: |
+          run_dir=".agents/run-data/${{ steps.launch.outputs.run_id }}"
+          if [ -f "$run_dir/run.json" ]; then
+            python -m semshare cleanup --run-id "${{ steps.launch.outputs.run_id }}"
+          fi
+
+      - name: Preserve sanitized workflow evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v6
+        with:
+          name: semantic-sharing-evidence
+          path: .agents/evidence/runs/${{ steps.launch.outputs.run_id }}
+          if-no-files-found: warn
