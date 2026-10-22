@@ -26,10 +26,17 @@ jobs:
           python -m pip install -e research/semantic-sharing --no-deps
       - run: python -m unittest discover -s research/semantic-sharing/tests -v
       - run: python -m semshare download-model --cache-dir .agents/metrics-model-cache
-      - run: python -m semshare.benchmark --run-id metrics-${{ github.run_id }}-${{ github.run_attempt }} --cache-dir .agents/metrics-model-cache
+      - name: Derive a valid owned run identifier
+        shell: python
+        run: |
+          import hashlib, os
+          identifier = hashlib.sha256(f'{os.environ["GITHUB_RUN_ID"]}:{os.environ["GITHUB_RUN_ATTEMPT"]}'.encode()).hexdigest()[:32]
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+              output.write(f'METRICS_RUN_ID={identifier}\n')
+      - run: python -m semshare.benchmark --run-id "$METRICS_RUN_ID" --cache-dir .agents/metrics-model-cache
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: semantic-sharing-metrics-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
-          path: .agents/evidence/runs/metrics-${{ github.run_id }}-${{ github.run_attempt }}/
+          path: .agents/evidence/runs/${{ env.METRICS_RUN_ID }}/
