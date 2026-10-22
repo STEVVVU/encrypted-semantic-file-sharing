@@ -17,6 +17,34 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 MAX_UPLOAD_BYTES = 1_000_000
 SAFE_FILENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,119}\Z")
+SAFE_CSRF_TOKEN = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def _validate_api_base(api_base: str) -> str:
+    parsed = urlsplit(api_base)
+    if (
+        parsed.scheme != "http"
+        or parsed.hostname != "127.0.0.1"
+        or parsed.port is None
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+        or parsed.path.rstrip("/") != "/api/v1"
+    ):
+        raise ValueError("research workflow requires a local loopback SecuShare API")
+    return api_base.rstrip("/")
+
+
+class _SameOriginRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def __init__(self, api_base: str):
+        self.origin = urlsplit(api_base)
+
+    def redirect_request(self, request, response, code, message, headers, newurl):
+        target = urlsplit(newurl)
+        if (target.scheme, target.hostname, target.port) != (self.origin.scheme, self.origin.hostname, self.origin.port):
+            return None
+        return super().redirect_request(request, response, code, message, headers, newurl)
 
 
 class AppError(RuntimeError):
@@ -25,36 +53,37 @@ class AppError(RuntimeError):
 
 class SecuShareClient:
     def __init__(self, api_base: str, timeout: float = 5.0):
-        parsed = urlsplit(api_base)
-        if (
-            parsed.scheme != "http"
-            or parsed.hostname != "127.0.0.1"
-            or parsed.port is None
-            or parsed.username is not None
-            or parsed.password is not None
-            or parsed.query
-            or parsed.fragment
-            or parsed.path.rstrip("/") != "/api/v1"
-        ):
-            raise ValueError("research workflow requires a local loopback SecuShare API")
-        self.api_base = api_base.rstrip("/")
+        self.api_base = _validate_api_base(api_base)
+        parsed = urlsplit(self.api_base)
+        self._api_origin = (parsed.scheme, parsed.hostname, parsed.port)
         self.timeout = timeout
         self.cookies = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookies))
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self.cookies),
+            _SameOriginRedirectHandler(self.api_base),
+        )
         self.token: str | None = None
         self.csrf: str | None = None
 
     def request(self, path: str, method: str = "GET", body: bytes | None = None, content_type: str = "application/json"):
         if not path.startswith("/") or ".." in path.split("/"):
             raise ValueError("invalid API path")
+        method = method.upper()
+        api_base = _validate_api_base(self.api_base)
+        parsed = urlsplit(api_base)
+        if (parsed.scheme, parsed.hostname, parsed.port) != self._api_origin:
+            raise ValueError("research workflow cannot change the local SecuShare API origin")
         headers = {"Accept": "application/json"}
         if body is not None:
             headers["Content-Type"] = content_type
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         if method not in ("GET", "HEAD", "OPTIONS") and self.csrf:
+            if not SAFE_CSRF_TOKEN.fullmatch(self.csrf):
+                raise AppError("SecuShare guest session has an invalid CSRF token")
             headers["X-CSRF-Token"] = self.csrf
-        request = urllib.request.Request(self.api_base + path, data=body, headers=headers, method=method)
+            headers["Cookie"] = f"csrf_token={self.csrf}"
+        request = urllib.request.Request(api_base + path, data=body, headers=headers, method=method)
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
                 return response.status, dict(response.headers.items()), response.read(MAX_UPLOAD_BYTES + 1024)
@@ -66,10 +95,10 @@ class SecuShareClient:
     def create_guest(self) -> dict:
         status, _headers, body = self.request("/auth/guest", "POST", b"{}")
         data = self._json_success(status, body)
-        self.token = data.get("token")
-        self.csrf = data.get("csrf_token")
-        if not isinstance(self.token, str) or not self.token or not isinstance(self.csrf, str) or not self.csrf:
+        token, csrf = data.get("token"), data.get("csrf_token")
+        if not isinstance(token, str) or not token or not isinstance(csrf, str) or not SAFE_CSRF_TOKEN.fullmatch(csrf):
             raise AppError("SecuShare guest session omitted authentication or CSRF data")
+        self.token, self.csrf = token, csrf
         return data.get("user", {})
 
     def upload_encrypted(self, filename: str, plaintext: bytes) -> tuple[dict, dict]:

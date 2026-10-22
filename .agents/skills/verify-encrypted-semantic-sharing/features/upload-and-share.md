@@ -2,6 +2,8 @@
 
 The client uses SecuShare's existing guest session, encrypted file upload, share creation, and share download flows, then decrypts the downloaded bytes locally.
 
+For state-changing API requests, the client sends the validated guest CSRF value in both the `X-CSRF-Token` header and matching `csrf_token` cookie. It accepts only the fixed hexadecimal token format returned by the app and refuses redirects to another origin, keeping the cookie inside the local app boundary.
+
 ## Sub-features
 
 - `upload`: encrypt and upload synthetic plaintext to the actual app API.
