@@ -1,0 +1,8 @@
+{
+  "run_data_removed": true,
+  "run_id": "25d64579821f4838a044dad0252fb274",
+  "stopped": [
+    "storage_b",
+    "storage_a"
+  ]
+}

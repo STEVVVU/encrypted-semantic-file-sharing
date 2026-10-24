@@ -1,0 +1,322 @@
+[
+  {
+    "calls": 1,
+    "cumulative_seconds": 1.0755059,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\workspace.py",
+    "function": "search",
+    "line": 84,
+    "self_seconds": 0.0003443
+  },
+  {
+    "calls": 2,
+    "cumulative_seconds": 1.0450868,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "records",
+    "line": 354,
+    "self_seconds": 9.2e-06
+  },
+  {
+    "calls": 2,
+    "cumulative_seconds": 1.0450772000000002,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "_snapshot",
+    "line": 363,
+    "self_seconds": 0.0023514
+  },
+  {
+    "calls": 254,
+    "cumulative_seconds": 1.0248759,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "get",
+    "line": 152,
+    "self_seconds": 0.20271070000000002
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.5004703,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "get",
+    "line": 108,
+    "self_seconds": 0.0006009
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.499827,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\scan_benchmark.py",
+    "function": "request",
+    "line": 181,
+    "self_seconds": 0.0013731000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.49814870000000006,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "request",
+    "line": 78,
+    "self_seconds": 0.004041100000000001
+  },
+  {
+    "calls": 15904,
+    "cumulative_seconds": 0.4306491,
+    "file": "~",
+    "function": "<built-in method builtins.next>",
+    "line": 0,
+    "self_seconds": 0.0043613
+  },
+  {
+    "calls": 7444,
+    "cumulative_seconds": 0.42998640000000005,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\contextlib.py",
+    "function": "__enter__",
+    "line": 132,
+    "self_seconds": 0.0022589000000000003
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.4278851,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "stream",
+    "line": 827,
+    "self_seconds": 0.00103
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.3661054,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "send",
+    "line": 879,
+    "self_seconds": 0.0012573
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.3628428,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "_send_handling_auth",
+    "line": 930,
+    "self_seconds": 0.0009381000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.3602592,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "_send_handling_redirects",
+    "line": 964,
+    "self_seconds": 0.0008931000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.35881450000000004,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "_send_single_request",
+    "line": 1001,
+    "self_seconds": 0.0035776000000000002
+  },
+  {
+    "calls": 4210558,
+    "cumulative_seconds": 0.3216949,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "<genexpr>",
+    "line": 155,
+    "self_seconds": 0.3216949
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.30701320000000004,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_transports\\default.py",
+    "function": "handle_request",
+    "line": 230,
+    "self_seconds": 0.0043001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.2877986,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\connection_pool.py",
+    "function": "handle_request",
+    "line": 199,
+    "self_seconds": 0.0034623
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.25906490000000004,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\connection.py",
+    "function": "handle_request",
+    "line": 69,
+    "self_seconds": 0.0010404000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.256786,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\http11.py",
+    "function": "handle_request",
+    "line": 65,
+    "self_seconds": 0.0052770000000000004
+  },
+  {
+    "calls": 1524,
+    "cumulative_seconds": 0.2041831,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\http11.py",
+    "function": "_receive_event",
+    "line": 209,
+    "self_seconds": 0.005061700000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.17843920000000002,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\http11.py",
+    "function": "_receive_response_headers",
+    "line": 170,
+    "self_seconds": 0.0014405000000000002
+  },
+  {
+    "calls": 928,
+    "cumulative_seconds": 0.1414872,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_backends\\sync.py",
+    "function": "read",
+    "line": 124,
+    "self_seconds": 0.0026134
+  },
+  {
+    "calls": 928,
+    "cumulative_seconds": 0.1348023,
+    "file": "~",
+    "function": "<method 'recv' of '_socket.socket' objects>",
+    "line": 0,
+    "self_seconds": 0.1348023
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.06185620000000001,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_models.py",
+    "function": "iter_raw",
+    "line": 935,
+    "self_seconds": 0.0023492
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0605199,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "build_request",
+    "line": 340,
+    "self_seconds": 0.0022014
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0505851,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\http11.py",
+    "function": "_send_request_headers",
+    "line": 140,
+    "self_seconds": 0.0017291000000000001
+  },
+  {
+    "calls": 2452,
+    "cumulative_seconds": 0.049584300000000005,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\h11\\_connection.py",
+    "function": "next_event",
+    "line": 438,
+    "self_seconds": 0.0039982
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.045108300000000004,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_models.py",
+    "function": "extract_cookies",
+    "line": 1101,
+    "self_seconds": 0.0009622000000000001
+  },
+  {
+    "calls": 1524,
+    "cumulative_seconds": 0.041067400000000004,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\http11.py",
+    "function": "_send_event",
+    "line": 163,
+    "self_seconds": 0.0011385
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.036337,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "__iter__",
+    "line": 152,
+    "self_seconds": 0.0004332
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.0359038,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_transports\\default.py",
+    "function": "__iter__",
+    "line": 125,
+    "self_seconds": 0.0007904
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.0337483,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\connection_pool.py",
+    "function": "__iter__",
+    "line": 401,
+    "self_seconds": 0.0004379
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.033310400000000004,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\http11.py",
+    "function": "__iter__",
+    "line": 330,
+    "self_seconds": 0.0013365
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0325313,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_client.py",
+    "function": "_merge_url",
+    "line": 391,
+    "self_seconds": 0.0005941000000000001
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.0322068,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_urls.py",
+    "function": "__init__",
+    "line": 77,
+    "self_seconds": 0.0012358
+  },
+  {
+    "calls": 1599,
+    "cumulative_seconds": 0.0314463,
+    "file": "~",
+    "function": "<built-in method builtins.any>",
+    "line": 0,
+    "self_seconds": 0.0134418
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.030875200000000002,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_models.py",
+    "function": "__init__",
+    "line": 1249,
+    "self_seconds": 0.0022513000000000003
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.030734400000000002,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpx\\_urlparse.py",
+    "function": "urlparse",
+    "line": 213,
+    "self_seconds": 0.0040651
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.0306867,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\httpcore\\_sync\\http11.py",
+    "function": "_receive_response_body",
+    "line": 196,
+    "self_seconds": 0.0015432
+  },
+  {
+    "calls": 2452,
+    "cumulative_seconds": 0.029498200000000002,
+    "file": "C:\\Users\\steve\\.codex\\tools\\coursework-ml\\Lib\\site-packages\\h11\\_connection.py",
+    "function": "_extract_next_receive_event",
+    "line": 410,
+    "self_seconds": 0.0024646
+  }
+]

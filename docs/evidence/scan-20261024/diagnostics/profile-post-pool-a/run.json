@@ -1,0 +1,12 @@
+{
+  "mode": "two sidecar processes only",
+  "run_id": "91d4a6a331e24ab8bfcc5c5e6ea4cc30",
+  "storage_instance_ids": [
+    "91d4a6a331e24ab8bfcc5c5e6ea4cc30-a",
+    "91d4a6a331e24ab8bfcc5c5e6ea4cc30-b"
+  ],
+  "storage_urls": [
+    "http://127.0.0.1:60869",
+    "http://127.0.0.1:60870"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "application_server": false,
+  "cpu_count": 24,
+  "limits": {
+    "max_client_plus_sidecar_rss_bytes": 1073741824,
+    "minimum_free_disk_bytes": 10737418240,
+    "wall_seconds": 1200
+  },
+  "model_file_hashes": {
+    "config.json": "953f9c0d463486b10a6871cc2fd59f223b2c70184f49815e7efbcab5d8908b41",
+    "model.safetensors": "53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db",
+    "special_tokens_map.json": "303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3",
+    "tokenizer.json": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+    "tokenizer_config.json": "acb92769e8195aabd29b7b2137a9e6d6e25c476a4f15aa4355c233426c61576b",
+    "vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+  },
+  "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+  "model_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "point_read_baseline": {
+    "commit": "72f07848a8133b36aece9a7e0816ce09f9b2e0f5",
+    "path": "research/semantic-sharing/src/semshare/oram.py",
+    "scope": "only the historical records method is invoked; current PathORAM open/read/load validation and cryptography remain active",
+    "source_sha256": "714302203102aec8ebaf0e39433efcf21fb2b885d129f6fb351db1ef73f2b761"
+  },
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "sidecar_only": true,
+  "source_commit": "72f07848a8133b36aece9a7e0816ce09f9b2e0f5",
+  "source_hashes": {
+    "research/semantic-sharing/src/semshare/benchmark.py": "b0a935310c874e60063a410c535c64bc48ec5528b4dc72b75feee86360e508ee",
+    "research/semantic-sharing/src/semshare/encoder.py": "26a71cc89ed6e7f30a20998dd0ed410ca3227cb6cbeded9f6ea04179bf862a68",
+    "research/semantic-sharing/src/semshare/oram.py": "6f857a2d72597d069e359729b141e154918145838d2d7b8780a6cfd5bc975a86",
+    "research/semantic-sharing/src/semshare/scan_benchmark.py": "0c1c1fde779034d8a6b1b16a86606f4d83c9651c0b20d60599642093aff3857f",
+    "research/semantic-sharing/src/semshare/workspace.py": "5c686036464eaeab74a45ef36b7211cfbb55046f6f7e53a3c47d8dab7d4a3843"
+  },
+  "torch_threads": 2,
+  "torch_version": "2.11.0+cu128",
+  "workload": {
+    "encoding": "all document and query vectors precomputed in batches of at most 64 outside search timing",
+    "queries": [
+      "refund",
+      "garden",
+      "travel",
+      "backup"
+    ],
+    "rounds": 5,
+    "sizes": [
+      64,
+      512,
+      1024
+    ]
+  }
+}

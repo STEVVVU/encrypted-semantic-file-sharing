@@ -1,0 +1,322 @@
+[
+  {
+    "calls": 1,
+    "cumulative_seconds": 5.4480214,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\workspace.py",
+    "function": "search",
+    "line": 84,
+    "self_seconds": 0.00044290000000000003
+  },
+  {
+    "calls": 2,
+    "cumulative_seconds": 5.4173786,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "records",
+    "line": 324,
+    "self_seconds": 1.08e-05
+  },
+  {
+    "calls": 2,
+    "cumulative_seconds": 5.4173673,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "_snapshot",
+    "line": 333,
+    "self_seconds": 0.0032790000000000002
+  },
+  {
+    "calls": 254,
+    "cumulative_seconds": 5.3931034,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "get",
+    "line": 122,
+    "self_seconds": 0.20622490000000002
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.859432,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "get",
+    "line": 90,
+    "self_seconds": 0.0009642
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.858427300000001,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\scan_benchmark.py",
+    "function": "request",
+    "line": 168,
+    "self_seconds": 0.0023682
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.8554996,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "request",
+    "line": 68,
+    "self_seconds": 0.0044998
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.7706945,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\urllib\\request.py",
+    "function": "urlopen",
+    "line": 139,
+    "self_seconds": 0.0006018
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.7700927,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\urllib\\request.py",
+    "function": "open",
+    "line": 500,
+    "self_seconds": 0.0035599000000000004
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.7603299,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\urllib\\request.py",
+    "function": "_open",
+    "line": 529,
+    "self_seconds": 0.0007793
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 4.7595506,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\urllib\\request.py",
+    "function": "_call_chain",
+    "line": 489,
+    "self_seconds": 0.0009090000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.7582687,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\urllib\\request.py",
+    "function": "http_open",
+    "line": 1376,
+    "self_seconds": 0.0010332
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.7572355,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\urllib\\request.py",
+    "function": "do_open",
+    "line": 1307,
+    "self_seconds": 0.0048162000000000005
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.449886,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "request",
+    "line": 1300,
+    "self_seconds": 0.0008673000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.4490187,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "_send_request",
+    "line": 1305,
+    "self_seconds": 0.0033134
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.4342522,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "endheaders",
+    "line": 1287,
+    "self_seconds": 0.0006833000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.4335689,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "_send_output",
+    "line": 1049,
+    "self_seconds": 0.0009918000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.432377000000001,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "send",
+    "line": 988,
+    "self_seconds": 0.0020163
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.400977500000001,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "connect",
+    "line": 959,
+    "self_seconds": 0.0030161000000000003
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.3933305,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\socket.py",
+    "function": "create_connection",
+    "line": 809,
+    "self_seconds": 0.0036580000000000002
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 4.3620178,
+    "file": "~",
+    "function": "<method 'connect' of '_socket.socket' objects>",
+    "line": 0,
+    "self_seconds": 4.3620178
+  },
+  {
+    "calls": 4210558,
+    "cumulative_seconds": 0.32744650000000003,
+    "file": "C:\\Users\\steve\\Projects\\encrypted-semantic-file-sharing\\research\\semantic-sharing\\src\\semshare\\oram.py",
+    "function": "<genexpr>",
+    "line": 125,
+    "self_seconds": 0.32744650000000003
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.2970778,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "getresponse",
+    "line": 1351,
+    "self_seconds": 0.0028812
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.28231300000000004,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "begin",
+    "line": 318,
+    "self_seconds": 0.0041027
+  },
+  {
+    "calls": 1524,
+    "cumulative_seconds": 0.23123010000000002,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\socket.py",
+    "function": "readinto",
+    "line": 692,
+    "self_seconds": 0.0021004
+  },
+  {
+    "calls": 1524,
+    "cumulative_seconds": 0.22805470000000003,
+    "file": "~",
+    "function": "<method 'recv_into' of '_socket.socket' objects>",
+    "line": 0,
+    "self_seconds": 0.22805470000000003
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.2274149,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "_read_status",
+    "line": 285,
+    "self_seconds": 0.0033534000000000003
+  },
+  {
+    "calls": 2540,
+    "cumulative_seconds": 0.223839,
+    "file": "~",
+    "function": "<method 'readline' of '_io.BufferedReader' objects>",
+    "line": 0,
+    "self_seconds": 0.0024404
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0553159,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "read",
+    "line": 457,
+    "self_seconds": 0.002739
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.046649100000000006,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "parse_headers",
+    "line": 231,
+    "self_seconds": 0.0027171
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0411337,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\http\\client.py",
+    "function": "_close_conn",
+    "line": 419,
+    "self_seconds": 0.0003599
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.040773800000000006,
+    "file": "~",
+    "function": "<method 'close' of '_io.BufferedReader' objects>",
+    "line": 0,
+    "self_seconds": 0.0006727
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.040294300000000005,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\email\\parser.py",
+    "function": "parsestr",
+    "line": 59,
+    "self_seconds": 0.0021705
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0401011,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\socket.py",
+    "function": "close",
+    "line": 769,
+    "self_seconds": 0.0013596
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0385258,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\socket.py",
+    "function": "_decref_socketios",
+    "line": 489,
+    "self_seconds": 0.0003775
+  },
+  {
+    "calls": 1016,
+    "cumulative_seconds": 0.0383927,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\socket.py",
+    "function": "close",
+    "line": 499,
+    "self_seconds": 0.0006448000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0381238,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\email\\parser.py",
+    "function": "parse",
+    "line": 41,
+    "self_seconds": 0.0018520000000000001
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0377479,
+    "file": "C:\\Users\\steve\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\socket.py",
+    "function": "_real_close",
+    "line": 495,
+    "self_seconds": 0.00040540000000000004
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.0373425,
+    "file": "~",
+    "function": "<function socket.close at 0x0000019B5E50A5C0>",
+    "line": 0,
+    "self_seconds": 0.0373425
+  },
+  {
+    "calls": 508,
+    "cumulative_seconds": 0.028911100000000002,
+    "file": "~",
+    "function": "<method 'sendall' of '_socket.socket' objects>",
+    "line": 0,
+    "self_seconds": 0.028911100000000002
+  }
+]

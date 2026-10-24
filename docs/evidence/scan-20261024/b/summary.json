@@ -1,0 +1,132 @@
+{
+  "comparison": "64-record historical point-read method versus snapshot on fresh equivalent indexes; 512 and 1024 snapshot costs only",
+  "comparisons": [
+    {
+      "max_seconds": 5.8583560999977635,
+      "median_round_seconds": 4.7975705999997444,
+      "method": "point_read",
+      "min_seconds": 3.708432100000209,
+      "p50_seconds": 4.7751162000058684,
+      "p95_seconds": 5.268493199997465,
+      "p99_seconds": null,
+      "quantile_method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "queries_per_round": 4,
+      "range_round_seconds": [
+        4.213288099992496,
+        5.0590751499985345
+      ],
+      "round_medians_seconds": [
+        4.580735499992443,
+        4.213288099992496,
+        4.85076239999762,
+        5.0590751499985345,
+        4.7975705999997444
+      ],
+      "rounds": 5,
+      "samples": 20,
+      "size": 64
+    },
+    {
+      "max_seconds": 0.5824170999985654,
+      "median_round_seconds": 0.46425220000674017,
+      "method": "snapshot",
+      "min_seconds": 0.4085454000014579,
+      "p50_seconds": 0.4624296000110917,
+      "p95_seconds": 0.5024468999909004,
+      "p99_seconds": null,
+      "quantile_method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "queries_per_round": 4,
+      "range_round_seconds": [
+        0.41876534999755677,
+        0.4991028500007815
+      ],
+      "round_medians_seconds": [
+        0.41876534999755677,
+        0.4991028500007815,
+        0.47262805000355,
+        0.46425220000674017,
+        0.4296685000008438
+      ],
+      "rounds": 5,
+      "samples": 20,
+      "size": 64
+    },
+    {
+      "max_seconds": 4.312572100010584,
+      "median_round_seconds": 3.7216404499995406,
+      "method": "snapshot",
+      "min_seconds": 3.3072612999967532,
+      "p50_seconds": 3.660066900003585,
+      "p95_seconds": 4.223558799989405,
+      "p99_seconds": null,
+      "quantile_method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "queries_per_round": 4,
+      "range_round_seconds": [
+        3.3319869999977527,
+        4.178600849998475
+      ],
+      "round_medians_seconds": [
+        3.5532640500023263,
+        3.7747546500031604,
+        3.7216404499995406,
+        4.178600849998475,
+        3.3319869999977527
+      ],
+      "rounds": 5,
+      "samples": 20,
+      "size": 512
+    },
+    {
+      "max_seconds": 7.778088300008676,
+      "median_round_seconds": 7.409772799990606,
+      "method": "snapshot",
+      "min_seconds": 6.251880900003016,
+      "p50_seconds": 7.276415599990287,
+      "p95_seconds": 7.766695500002243,
+      "p99_seconds": null,
+      "quantile_method": "nearest-rank empirical quantiles; p99 omitted below100 observations",
+      "queries_per_round": 4,
+      "range_round_seconds": [
+        6.389397800005099,
+        7.540000250002777
+      ],
+      "round_medians_seconds": [
+        7.059748700005002,
+        7.540000250002777,
+        7.429058150002675,
+        7.409772799990606,
+        6.389397800005099
+      ],
+      "rounds": 5,
+      "samples": 20,
+      "size": 1024
+    }
+  ],
+  "errors": 0,
+  "rejected": 0,
+  "round_order": [
+    [
+      "point_read",
+      "snapshot"
+    ],
+    [
+      "snapshot",
+      "point_read"
+    ],
+    [
+      "point_read",
+      "snapshot"
+    ],
+    [
+      "snapshot",
+      "point_read"
+    ],
+    [
+      "point_read",
+      "snapshot"
+    ]
+  ],
+  "scope": "CPU-only semantic index and two local sidecars; no SecuShare application server or upload path",
+  "status": "passed",
+  "total_queries": 80
+}

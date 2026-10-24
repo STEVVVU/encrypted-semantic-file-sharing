@@ -11,7 +11,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 from semshare.encoder import DIMENSION
-from semshare.oram import ORAMError, Sidecar, SidecarPair
+from semshare.oram import BUCKET_BYTES, MAX_CAPACITY, ORAMError, Sidecar, SidecarPair
 from semshare.sidecar import ObjectStore, handler_for
 from semshare.workspace import Workspace
 
@@ -39,6 +39,7 @@ class PairServers:
         self.pair = SidecarPair(*self.sidecars)
 
     def close(self):
+        self.pair.close()
         for server in self.servers:
             server.shutdown()
             server.server_close()
@@ -47,6 +48,23 @@ class PairServers:
 
 
 class WorkspaceTests(unittest.TestCase):
+    def test_workspace_accepts_shared_max_capacity_and_rejects_above_it(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            pair = PairServers(root / "stores")
+            try:
+                workspace = Workspace.create(root / "client", pair.pair, capacity=MAX_CAPACITY)
+                self.assertEqual(Workspace.open(root / "client", pair.pair).state_summary("alice")["capacity"], MAX_CAPACITY)
+                state = workspace._load()
+                state["capacity"] = MAX_CAPACITY + 1
+                workspace._save(state)
+                with self.assertRaisesRegex(ORAMError, "capacity"):
+                    Workspace.open(root / "client", pair.pair)
+                with self.assertRaises(ValueError):
+                    Workspace.create(root / "too-large", pair.pair, capacity=MAX_CAPACITY + 1)
+            finally:
+                pair.close()
+
     def test_session_delta_is_private_until_search_and_merge_is_atomic(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -57,8 +75,15 @@ class WorkspaceTests(unittest.TestCase):
                 vector_b = [0.0, 1.0] + [0.0] * (DIMENSION - 2)
                 workspace.add("alice", "file-a:share-a", record("file-a", "share-a", vector_a))
                 workspace.add("bob", "file-b:share-b", record("file-b", "share-b", vector_b))
+                before = [(item.messages, item.bytes_sent, item.bytes_received) for item in pair.sidecars]
                 self.assertEqual([x["file_id"] for x in workspace.search("alice", vector_a)], ["file-a"])
+                after_alice = [(item.messages, item.bytes_sent, item.bytes_received) for item in pair.sidecars]
                 self.assertEqual([x["file_id"] for x in workspace.search("bob", vector_b)], ["file-b"])
+                after_bob = [(item.messages, item.bytes_sent, item.bytes_received) for item in pair.sidecars]
+                alice_trace = [(m - m0, s - s0, r - r0) for (m, s, r), (m0, s0, r0) in zip(after_alice, before, strict=True)]
+                bob_trace = [(m - m0, s - s0, r - r0) for (m, s, r), (m0, s0, r0) in zip(after_bob, after_alice, strict=True)]
+                self.assertEqual(alice_trace, bob_trace)
+                self.assertEqual(alice_trace, [(30, 0, 30 * BUCKET_BYTES)] * 2)
 
                 old = workspace.state_summary("alice")["active_epoch"]
                 original_pair = workspace.sidecars

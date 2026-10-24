@@ -52,6 +52,7 @@ class ObjectStore:
 
 def handler_for(store: ObjectStore, instance_id: str = ""):
     class Handler(BaseHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
         server_version = "SecuShareShareStore/1"
         sys_version = ""
 

@@ -1,0 +1,48 @@
+         5231768 function calls (5207504 primitive calls) in 1.099 seconds
+
+   Ordered by: cumulative time
+   List reduced from 441 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    1.099    1.099 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\workspace.py:84(search)
+        2    0.000    0.000    1.068    0.534 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\oram.py:354(records)
+        2    0.002    0.001    1.068    0.534 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\oram.py:363(_snapshot)
+      254    0.205    0.001    1.048    0.004 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\oram.py:152(get)
+      508    0.001    0.000    0.519    0.001 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\oram.py:108(get)
+      508    0.001    0.000    0.518    0.001 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\scan_benchmark.py:181(request)
+      508    0.004    0.000    0.517    0.001 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\oram.py:78(request)
+16016/7888    0.005    0.000    0.447    0.000 {built-in method builtins.next}
+7500/3944    0.002    0.000    0.446    0.000 C:\Users\steve\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:132(__enter__)
+     1016    0.001    0.000    0.444    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:827(stream)
+      508    0.001    0.000    0.380    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:879(send)
+      508    0.001    0.000    0.376    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:930(_send_handling_auth)
+      508    0.001    0.000    0.374    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:964(_send_handling_redirects)
+      508    0.004    0.000    0.372    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:1001(_send_single_request)
+  4210558    0.325    0.000    0.325    0.000 C:\Users\steve\Projects\encrypted-semantic-file-sharing\research\semantic-sharing\src\semshare\oram.py:155(<genexpr>)
+      508    0.005    0.000    0.318    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_transports\default.py:230(handle_request)
+      508    0.004    0.000    0.297    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\connection_pool.py:199(handle_request)
+      508    0.001    0.000    0.267    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\connection.py:69(handle_request)
+      508    0.006    0.000    0.264    0.001 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\http11.py:65(handle_request)
+     1524    0.006    0.000    0.210    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\http11.py:209(_receive_event)
+      508    0.001    0.000    0.183    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\http11.py:170(_receive_response_headers)
+      956    0.003    0.000    0.144    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_backends\sync.py:124(read)
+      956    0.137    0.000    0.137    0.000 {method 'recv' of '_socket.socket' objects}
+     1016    0.003    0.000    0.064    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_models.py:935(iter_raw)
+      508    0.002    0.000    0.063    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:340(build_request)
+      508    0.002    0.000    0.053    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\http11.py:140(_send_request_headers)
+     2480    0.004    0.000    0.052    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\h11\_connection.py:438(next_event)
+      508    0.001    0.000    0.047    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_models.py:1101(extract_cookies)
+     1524    0.001    0.000    0.043    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\http11.py:163(_send_event)
+     1016    0.000    0.000    0.038    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:152(__iter__)
+     1016    0.001    0.000    0.038    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_transports\default.py:125(__iter__)
+     1016    0.000    0.000    0.036    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\connection_pool.py:401(__iter__)
+     1016    0.001    0.000    0.035    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\http11.py:330(__iter__)
+      508    0.001    0.000    0.034    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_client.py:391(_merge_url)
+     1016    0.001    0.000    0.033    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_urls.py:77(__init__)
+     1016    0.002    0.000    0.033    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpcore\_sync\http11.py:196(_receive_response_body)
+      508    0.003    0.000    0.032    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_models.py:1249(__init__)
+     1599    0.014    0.000    0.032    0.000 {built-in method builtins.any}
+      508    0.004    0.000    0.032    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\httpx\_urlparse.py:213(urlparse)
+     2480    0.003    0.000    0.031    0.000 C:\Users\steve\.codex\tools\coursework-ml\Lib\site-packages\h11\_connection.py:410(_extract_next_receive_event)
+
+

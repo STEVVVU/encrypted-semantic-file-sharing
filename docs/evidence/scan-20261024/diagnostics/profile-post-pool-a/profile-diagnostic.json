@@ -1,0 +1,17 @@
+{
+  "diagnostic_only": true,
+  "errors": 0,
+  "fixture_records": 64,
+  "profile_queries": 1,
+  "resources": {
+    "free_disk_bytes": 188229148672,
+    "peak_client_plus_current_sidecars_rss_bytes": 824057856,
+    "process_rss_bytes": {
+      "client": 811245568,
+      "storage_a": 6406144,
+      "storage_b": 6406144
+    }
+  },
+  "status": "passed",
+  "timed_campaign": false
+}

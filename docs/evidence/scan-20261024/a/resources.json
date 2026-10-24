@@ -1,0 +1,9 @@
+{
+  "free_disk_bytes": 186567802880,
+  "peak_client_plus_current_sidecars_rss_bytes": 890363904,
+  "process_rss_bytes": {
+    "client": 877379584,
+    "storage_a": 6496256,
+    "storage_b": 6488064
+  }
+}

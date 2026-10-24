@@ -54,7 +54,8 @@ class GuardTests(unittest.TestCase):
                 SecuShareClient(url)
 
     def test_sidecars_and_run_ids_are_strictly_bounded(self):
-        Sidecar("http://127.0.0.1:9000")
+        with Sidecar("http://127.0.0.1:9000"):
+            pass
         for url in ("http://localhost:9000", "http://127.0.0.1:9000/path", "http://user@127.0.0.1:9000"):
             with self.subTest(url=url), self.assertRaises(ValueError):
                 Sidecar(url)

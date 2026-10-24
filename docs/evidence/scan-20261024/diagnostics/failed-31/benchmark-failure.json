@@ -1,0 +1,6 @@
+{
+  "error": "index scan benchmark exceeded its 20-minute limit",
+  "error_type": "TimeoutError",
+  "samples_written": 31,
+  "status": "failed"
+}

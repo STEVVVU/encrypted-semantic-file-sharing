@@ -166,7 +166,8 @@ def doctor(run_id: str) -> dict:
     from .oram import Sidecar
 
     for url, instance_id in zip(state["storage_urls"], state["storage_instance_ids"], strict=True):
-        Sidecar(url, instance_id=instance_id).health()
+        with Sidecar(url, instance_id=instance_id) as sidecar:
+            sidecar.health()
     return {"run_id": run_id, "status": "ready", "app": state["app_url"], "storage_sidecars": len(state["storage_urls"])}
 
 
@@ -261,12 +262,11 @@ def _wait_health(state: dict, timeout: float) -> None:
             raise LifecycleError("an owned service exited before becoming ready")
         try:
             _check_app(state)
-            doctor_sidecars = []
             from .oram import Sidecar
 
-            doctor_sidecars = [Sidecar(url, instance_id=identity) for url, identity in zip(state["storage_urls"], state["storage_instance_ids"], strict=True)]
-            for sidecar in doctor_sidecars:
-                sidecar.health()
+            for url, identity in zip(state["storage_urls"], state["storage_instance_ids"], strict=True):
+                with Sidecar(url, instance_id=identity) as sidecar:
+                    sidecar.health()
             return
         except Exception as exc:
             last_error = str(exc)

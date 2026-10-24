@@ -112,11 +112,16 @@ class CountedClient(SecuShareClient):
 
 
 def drive(state, cache, smoke):
-    evidence = lifecycle.EVIDENCE_ROOT / state["run_id"]
     encoder = SentenceEncoder(_model_path(cache))
     owner = CountedClient(state["api_url"])
     owner.create_guest()
     pair = SidecarPair(*(Sidecar(url, instance_id=identity) for url, identity in zip(state["storage_urls"], state["storage_instance_ids"], strict=True)))
+    with pair:
+        return _drive(state, encoder, owner, pair, smoke)
+
+
+def _drive(state, encoder, owner, pair, smoke):
+    evidence = lifecycle.EVIDENCE_ROOT / state["run_id"]
     sizes = [8] if smoke else [8, 32, 64]
     queries = [{"label": label, "text": query} for label, _, query in TOPICS[:4]]
     records, uploads, samples = [], [], []

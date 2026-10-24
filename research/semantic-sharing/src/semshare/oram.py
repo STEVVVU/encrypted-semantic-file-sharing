@@ -8,16 +8,16 @@ import json
 import math
 import os
 import secrets
+import re
 import threading
 import time
-import urllib.error
-import urllib.request
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 from urllib.parse import urlsplit
 
+import httpx
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 BLOCK_BYTES = 4096
@@ -31,9 +31,12 @@ SLOT_BYTES = NONCE_BYTES + PLAIN_BYTES + TAG_BYTES
 BUCKET_BYTES = BUCKET_SLOTS * SLOT_BYTES
 MANIFEST_AAD = b"secushare-semshare-manifest-v1"
 BLOCK_AAD = b"secushare-semshare-block-v1"
-MAX_CAPACITY = 64
+MAX_CAPACITY = 1024
 MAX_STASH = 256
 MAX_REVISION = 100_000
+# Worst-case bounded stash, escaped references, position/object maps, JSON and AEAD stay below 3 MiB.
+MAX_MANIFEST_BYTES = 4 * 1024 * 1024
+OBJECT_ID = re.compile(r"[0-9a-f]{32}\Z")
 
 
 class ORAMError(RuntimeError):
@@ -60,22 +63,41 @@ class Sidecar:
         self.messages = 0
         self.bytes_sent = 0
         self.bytes_received = 0
+        self._counter_lock = threading.Lock()
+        self._client = httpx.Client(timeout=timeout, trust_env=False, follow_redirects=False)
+
+    def close(self) -> None:
+        self._client.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_exc):
+        self.close()
 
     def request(self, method: str, object_id: str | None = None, data: bytes | None = None) -> bytes:
         path = "/health" if object_id is None else f"/objects/{object_id}"
-        req = urllib.request.Request(self.base_url + path, data=data, method=method)
-        if data is not None:
-            req.add_header("Content-Length", str(len(data)))
+        if object_id is not None and not OBJECT_ID.fullmatch(object_id):
+            raise ORAMError("invalid sidecar object id")
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as response:
-                result = response.read(BUCKET_BYTES + 1)
-                self.messages += 1
-                self.bytes_sent += len(data or b"")
-                self.bytes_received += len(result)
+            with self._client.stream(method, self.base_url + path, content=data) as response:
+                if not 200 <= response.status_code < 300:
+                    raise ORAMError(f"sidecar returned HTTP {response.status_code}")
+                if response.headers.get("content-encoding", "identity").lower() != "identity":
+                    raise ORAMError("sidecar returned an encoded response")
+                result = bytearray()
+                for chunk in response.iter_raw(chunk_size=BUCKET_BYTES + 1):
+                    result.extend(chunk)
+                    if len(result) > BUCKET_BYTES:
+                        break
+                with self._counter_lock:
+                    self.messages += 1
+                    self.bytes_sent += len(data or b"")
+                    self.bytes_received += len(result)
                 if len(result) > BUCKET_BYTES:
                     raise ORAMError("sidecar response exceeded the configured bucket limit")
-                return result
-        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                return bytes(result)
+        except (httpx.HTTPError, TimeoutError, OSError) as exc:
             raise ORAMError(f"sidecar request failed: {method} {self.base_url}") from exc
 
     def put(self, object_id: str, data: bytes) -> None:
@@ -102,6 +124,18 @@ class Sidecar:
 class SidecarPair:
     first: Sidecar
     second: Sidecar
+
+    def close(self) -> None:
+        try:
+            self.first.close()
+        finally:
+            self.second.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_exc):
+        self.close()
 
     def put(self, object_id: str, bucket: bytes) -> None:
         mask = secrets.token_bytes(len(bucket))
@@ -204,8 +238,17 @@ class PathORAM:
 
     @classmethod
     def create(cls, directory: Path, sidecars: SidecarPair, records: list[tuple[str, bytes]], capacity: int) -> "PathORAM":
-        if not 1 <= capacity <= MAX_CAPACITY or len(records) > capacity:
+        if type(capacity) is not int or not 1 <= capacity <= MAX_CAPACITY or len(records) > capacity:
             raise ValueError(f"capacity must be 1..{MAX_CAPACITY} and hold all records")
+        refs = []
+        for ref, record in records:
+            if not _valid_reference(ref):
+                raise ValueError("reference exceeds the configured bound")
+            if not isinstance(record, bytes) or len(record) > BLOCK_BYTES:
+                raise ValueError("record exceeds the fixed ORAM block size")
+            refs.append(ref)
+        if len(refs) != len(set(refs)):
+            raise ValueError("reference already exists in this index")
         if directory.exists() and any(directory.iterdir()):
             raise FileExistsError("ORAM directory already contains state")
         directory.mkdir(parents=True, exist_ok=True)
@@ -223,8 +266,6 @@ class PathORAM:
         tree: dict[int, list[bytes]] = {node: [] for node in range(node_count)}
         positions: dict[str, int] = {}
         for ref, record in records:
-            if len(record) > BLOCK_BYTES:
-                raise ValueError("record exceeds the fixed ORAM block size")
             block_id = secrets.token_bytes(BLOCK_ID_BYTES)
             leaf = secrets.randbelow(leaf_count)
             positions[_b64(block_id)] = leaf
@@ -265,7 +306,7 @@ class PathORAM:
         return result
 
     def append(self, ref: str, record: bytes) -> str:
-        if not ref or len(ref.encode("utf-8")) > 160 or len(record) > BLOCK_BYTES:
+        if not _valid_reference(ref) or len(record) > BLOCK_BYTES:
             raise ValueError("reference or record exceeds the configured bound")
         with FileLock(self.lock_path):
             state = self._load_state()
@@ -311,39 +352,43 @@ class PathORAM:
             return result
 
     def records(self) -> Iterator[tuple[str, bytes]]:
-        state = self._load_state()
-        for block_id in tuple(state["positions"]):
-            record = self.read(block_id)
-            if record is None:
-                raise ORAMError("position map references a missing ORAM block")
-            yield state["refs"][block_id], record
+        _, records = self._snapshot()
+        return iter(records)
 
     def invariant_report(self) -> dict[str, int | bool]:
-        state = self._load_state()
         self.sidecars.health()
-        all_blocks: dict[str, int] = {}
-        for node_text, object_id in state["objects"].items():
-            node = int(node_text)
-            bucket = self.sidecars.get(object_id)
-            for offset in range(0, BUCKET_BYTES, SLOT_BYTES):
-                raw = bucket[offset : offset + SLOT_BYTES]
-                block_id, payload = self._decrypt_block(raw)
-                if block_id == bytes(BLOCK_ID_BYTES):
-                    continue
-                block_key = _b64(block_id)
-                if block_key in all_blocks:
-                    raise ORAMError("duplicate block ID found in remote tree")
-                all_blocks[block_key] = node
-                if block_key not in state["positions"] or not _node_on_path(node, state["positions"][block_key], state["height"]):
-                    raise ORAMError("block placement violates the Path ORAM invariant")
-        for block_key in state["stash"]:
-            if block_key in all_blocks:
-                raise ORAMError("block exists in both the stash and remote tree")
-            all_blocks[block_key] = -1
-        complete = set(all_blocks) == set(state["positions"])
-        if len(state["stash"]) > MAX_STASH or not complete:
-            raise ORAMError("stash or block-count invariant failed")
-        return {"blocks": len(all_blocks), "stash": len(state["stash"]), "capacity": state["capacity"], "valid": True}
+        state, records = self._snapshot()
+        return {"blocks": len(records), "stash": len(state["stash"]), "capacity": state["capacity"], "valid": True}
+
+    def _snapshot(self) -> tuple[dict, list[tuple[str, bytes]]]:
+        with FileLock(self.lock_path):
+            state = self._load_state()
+            blocks: dict[str, bytes] = {}
+            node_count = (1 << (state["height"] + 1)) - 1
+            for node in range(node_count):
+                object_id = state["objects"][str(node)]
+                bucket = self.sidecars.get(object_id)
+                for offset in range(0, BUCKET_BYTES, SLOT_BYTES):
+                    block_id, payload = self._decrypt_block(bucket[offset : offset + SLOT_BYTES])
+                    if block_id == bytes(BLOCK_ID_BYTES):
+                        continue
+                    block_key = _b64(block_id)
+                    if block_key not in state["positions"]:
+                        raise ORAMError("remote bucket contains an unknown block ID")
+                    if not _node_on_path(node, state["positions"][block_key], state["height"]):
+                        raise ORAMError("block placement violates the Path ORAM invariant")
+                    if block_key in blocks:
+                        raise ORAMError("duplicate block ID found in remote tree")
+                    blocks[block_key] = payload
+            for block_key, payload in state["stash"].items():
+                if block_key not in state["positions"]:
+                    raise ORAMError("stash contains an unknown block ID")
+                if block_key in blocks:
+                    raise ORAMError("block exists in both the stash and remote tree")
+                blocks[block_key] = _unb64(payload)
+            if set(blocks) != set(state["positions"]):
+                raise ORAMError("stash or block-count invariant failed")
+            return state, [(state["refs"][key], blocks[key]) for key in state["positions"]]
 
     def shape(self) -> dict[str, int]:
         state = self._load_state()
@@ -429,12 +474,17 @@ class PathORAM:
         size = int.from_bytes(plain[BLOCK_ID_BYTES : BLOCK_ID_BYTES + BLOCK_LENGTH_BYTES], "big")
         if size > BLOCK_BYTES:
             raise ORAMError("decrypted record length exceeds the fixed block")
-        return block_id, plain[BLOCK_ID_BYTES + BLOCK_LENGTH_BYTES :][:size]
+        payload_start = BLOCK_ID_BYTES + BLOCK_LENGTH_BYTES
+        if any(plain[payload_start + size :]) or (block_id == bytes(BLOCK_ID_BYTES) and size):
+            raise ORAMError("decrypted block encoding is invalid")
+        return block_id, plain[payload_start : payload_start + size]
 
     def _save_state(self, state: dict) -> None:
         nonce = secrets.token_bytes(NONCE_BYTES)
         ciphertext = self.aes.encrypt(nonce, json.dumps(state, separators=(",", ":"), sort_keys=True).encode(), MANIFEST_AAD)
         data = nonce + ciphertext
+        if len(data) > MAX_MANIFEST_BYTES:
+            raise ORAMError("encrypted manifest exceeds the configured length limit")
         self.directory.mkdir(parents=True, exist_ok=True)
         temp = self.manifest_path.with_suffix(".pending")
         with temp.open("wb") as stream:
@@ -446,7 +496,7 @@ class PathORAM:
     def _load_state(self) -> dict:
         try:
             data = self.manifest_path.read_bytes()
-            if len(data) < NONCE_BYTES + TAG_BYTES or len(data) > 1024 * 1024:
+            if len(data) < NONCE_BYTES + TAG_BYTES or len(data) > MAX_MANIFEST_BYTES:
                 raise ORAMError("encrypted manifest length is invalid")
             raw = self.aes.decrypt(data[:NONCE_BYTES], data[NONCE_BYTES:], MANIFEST_AAD)
             state = json.loads(raw)
@@ -454,12 +504,44 @@ class PathORAM:
             raise
         except Exception as exc:
             raise ORAMError("encrypted manifest failed authentication or parsing") from exc
-        if state.get("schema") != 1 or not 1 <= state.get("capacity", 0) <= MAX_CAPACITY:
+        if not isinstance(state, dict) or set(state) != {"schema", "height", "capacity", "revision", "positions", "objects", "stash", "refs"}:
+            raise ORAMError("manifest fields are invalid")
+        capacity = state["capacity"]
+        height = state["height"]
+        revision = state["revision"]
+        if (
+            type(state["schema"]) is not int or state["schema"] != 1
+            or type(capacity) is not int or not 1 <= capacity <= MAX_CAPACITY
+            or type(height) is not int or height != max(1, math.ceil(math.log2(capacity)))
+            or type(revision) is not int or not 0 <= revision <= MAX_REVISION
+        ):
             raise ORAMError("manifest schema or capacity is unsupported")
-        if state.get("revision", MAX_REVISION + 1) > MAX_REVISION:
-            raise ORAMError("manifest revision exceeds the configured bound")
-        if len(state.get("positions", {})) > state["capacity"] or len(state.get("stash", {})) > MAX_STASH:
+        positions, objects, stash, refs = (state[name] for name in ("positions", "objects", "stash", "refs"))
+        if not all(isinstance(value, dict) for value in (positions, objects, stash, refs)):
+            raise ORAMError("manifest indexes are invalid")
+        if len(positions) > capacity or len(stash) > MAX_STASH:
             raise ORAMError("manifest exceeds the configured index bounds")
+        node_count = (1 << (height + 1)) - 1
+        if set(objects) != {str(node) for node in range(node_count)} or any(
+            not isinstance(object_id, str) or not OBJECT_ID.fullmatch(object_id) for object_id in objects.values()
+        ) or len(set(objects.values())) != node_count:
+            raise ORAMError("manifest bucket map is invalid")
+        for block_key, leaf in positions.items():
+            if not _canonical_block_id(block_key) or type(leaf) is not int or not 0 <= leaf < 1 << height:
+                raise ORAMError("manifest position map is invalid")
+        if set(refs) != set(positions) or any(
+            not _valid_reference(ref) for ref in refs.values()
+        ) or len(set(refs.values())) != len(refs):
+            raise ORAMError("manifest references are invalid")
+        for block_key, payload in stash.items():
+            if not _canonical_block_id(block_key) or block_key not in positions or not isinstance(payload, str):
+                raise ORAMError("manifest stash is invalid")
+            try:
+                decoded = _unb64(payload)
+            except (ValueError, TypeError) as exc:
+                raise ORAMError("manifest stash payload is invalid") from exc
+            if _b64(decoded) != payload or len(decoded) > BLOCK_BYTES:
+                raise ORAMError("manifest stash payload is invalid")
         return state
 
 
@@ -484,3 +566,22 @@ def _b64(value: bytes) -> str:
 
 def _unb64(value: str) -> bytes:
     return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
+
+
+def _canonical_block_id(value: object) -> bool:
+    if not isinstance(value, str) or len(value) != 22:
+        return False
+    try:
+        decoded = _unb64(value)
+    except (ValueError, TypeError):
+        return False
+    return len(decoded) == BLOCK_ID_BYTES and decoded != bytes(BLOCK_ID_BYTES) and _b64(decoded) == value
+
+
+def _valid_reference(value: object) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        return len(value.encode("utf-8")) <= 160
+    except UnicodeError:
+        return False

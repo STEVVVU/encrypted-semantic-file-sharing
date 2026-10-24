@@ -39,11 +39,8 @@ def _model_path(cache: Path) -> Path:
 
 def drive(run_id: str, cache: Path) -> dict:
     """Run an end-to-end client workflow using only synthetic documents."""
-    from .app_client import SecuShareClient
     from .encoder import SentenceEncoder
     from .oram import Sidecar, SidecarPair
-    from .workspace import Workspace
-    from .workflow import create_index_record, reference_url, upload_share_and_embed
 
     state = lifecycle.load_state(run_id)
     lifecycle.doctor(run_id)
@@ -52,6 +49,16 @@ def drive(run_id: str, cache: Path) -> dict:
         Sidecar(state["storage_urls"][0], instance_id=state["storage_instance_ids"][0]),
         Sidecar(state["storage_urls"][1], instance_id=state["storage_instance_ids"][1]),
     )
+    with pair:
+        return _drive(state, encoder, pair)
+
+
+def _drive(state, encoder, pair) -> dict:
+    from .app_client import SecuShareClient
+    from .workspace import Workspace
+    from .workflow import create_index_record, reference_url, upload_share_and_embed
+
+    run_id = state["run_id"]
     workspace_root = Path(state["run_dir"]) / "client-workspace"
     workspace = Workspace.create(workspace_root, pair, capacity=8)
 

@@ -16,7 +16,7 @@ from pathlib import Path
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from .encoder import DIMENSION, cosine
-from .oram import BLOCK_BYTES, FileLock, ORAMError, PathORAM, SidecarPair
+from .oram import BLOCK_BYTES, MAX_CAPACITY, FileLock, ORAMError, PathORAM, SidecarPair
 
 WORKSPACE_AAD = b"secushare-semshare-workspace-v1"
 SESSION_ID = re.compile(r"[A-Za-z0-9_-]{1,48}\Z")
@@ -33,8 +33,8 @@ class Workspace:
 
     @classmethod
     def create(cls, root: Path, sidecars: SidecarPair, capacity: int = 64) -> "Workspace":
-        if not 1 <= capacity <= 64:
-            raise ValueError("workspace capacity must be between 1 and 64")
+        if type(capacity) is not int or not 1 <= capacity <= MAX_CAPACITY:
+            raise ValueError(f"workspace capacity must be between 1 and {MAX_CAPACITY}")
         if root.exists() and any(root.iterdir()):
             raise FileExistsError("workspace directory already contains state")
         root.mkdir(parents=True, exist_ok=True)
@@ -184,7 +184,13 @@ class Workspace:
             state = json.loads(raw)
         except Exception as exc:
             raise ORAMError("workspace manifest failed authentication or parsing") from exc
-        if state.get("schema") != 1 or not 1 <= state.get("capacity", 0) <= 64:
+        if (
+            not isinstance(state, dict)
+            or type(state.get("schema")) is not int
+            or state["schema"] != 1
+            or type(state.get("capacity")) is not int
+            or not 1 <= state["capacity"] <= MAX_CAPACITY
+        ):
             raise ORAMError("workspace manifest schema or capacity is unsupported")
         if not isinstance(state.get("active_epochs"), dict) or not isinstance(state.get("deltas"), dict):
             raise ORAMError("workspace manifest is missing its active indexes")
