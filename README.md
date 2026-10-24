@@ -4,6 +4,131 @@ Local semantic search over encrypted shared documents, built on the complete [Se
 
 The added workflow combines client-side AES-GCM, a pinned MiniLM encoder, bounded Path ORAM indexes, private session deltas and immutable epoch merges. A recipient imports an explicit share link into a separate search corpus. File keys stay in the link fragment and trusted client state. Revocation prevents future server downloads; it cannot erase copies or keys a recipient already obtained.
 
+## Guide
+
+[Architecture and execution guide](#architecture-and-execution-guide) · [Run and verify](#run-and-verify) · [Current index-only scan results](#current-index-only-scan-results) · [Trust and current scope](#trust-and-current-scope) · [Source and research](#source-and-research)
+
+## Architecture and execution guide
+
+The inherited SecuShare app provides authenticated upload, share, download and revocation. The added Python research client calls those APIs, verifies share decryption, embeds text locally and stores fixed-size encrypted index blocks through two loopback sidecars. A [trusted client](#trusted-client) coordinates both sidecars. Their [XOR-split bytes](#sidecar-share) are a storage demonstration, not formal secure multiparty computation (MPC), a non-collusion guarantee or a proof against either sidecar.
+
+```mermaid
+flowchart LR
+  N1["Owner or recipient"] --> N2["SecuShare web API"]
+  N2["SecuShare web API"] --> N3["Encrypted file storage"]
+  N4["Trusted local client"] --> N2["SecuShare web API"]
+  N4["Trusted local client"] --> N5["Local encoder and ORAM index"]
+  N5["Local encoder and ORAM index"] --> N6["Loopback sidecar A"]
+  N5["Local encoder and ORAM index"] --> N7["Loopback sidecar B"]
+```
+
+Caption: the existing app manages file sharing; the local research client adds semantic indexing and sends randomized storage shares to two loopback processes.
+
+```mermaid
+flowchart TD
+  subgraph Sharing["App sharing"]
+    N1["Plaintext input"] --> N2["Upload encrypted through app API"]
+    N2["Upload encrypted through app API"] --> N3["Create share and download"]
+    N3["Create share and download"] --> N4["Decrypt and verify original bytes"]
+  end
+  subgraph Indexing["Trusted-client index"]
+    N4["Decrypt and verify original bytes"] --> N5["Pinned local encoder"]
+    N5["Pinned local encoder"] --> N6["Fixed-size record and AES-GCM bucket"]
+    N6["Fixed-size record and AES-GCM bucket"] --> N7["Path ORAM remap and eviction"]
+    N7["Path ORAM remap and eviction"] --> N8["XOR-split sidecar objects"]
+  end
+  N9["Two loopback sidecars"] --> N10["Read both shares and combine"]
+  N8 --> N9
+  Query["Search query"] --> Scan["Read authenticated full-tree snapshot"]
+  Scan --> N9
+  N10["Read both shares and combine"] --> N11["Verify bucket and rank locally"]
+  N12["Session delta"] --> N13["Immutable epoch merge"]
+  N5 --> N12
+  N13 --> N6
+  N7 -->|"request failure"| N14["ORAM request failure"]
+  Scan -->|"request or authentication failure"| N14
+  N14["ORAM request failure"] --> N15["Abort operation and retain error"]
+```
+
+The client indexes only bytes that it has decrypted and checked. During search the trusted client combines sidecar replies, decrypts buckets and ranks vectors locally. Epoch merging writes that session's changes into a new immutable base epoch and updates only that session's local epoch pointer.
+
+| Subsystem | Responsibility and owned state | Source |
+| --- | --- | --- |
+| App API adapter | Restricts the API base to loopback and performs encrypted upload/share/download operations. | [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py) |
+| Ingest workflow | Checks plaintext limits, verifies round-trip bytes, tests tamper rejection and packs the index record. | [`workflow.py`](research/semantic-sharing/src/semshare/workflow.py) |
+| Sentence encoder | Loads the pinned model and produces local vectors. | [`encoder.py`](research/semantic-sharing/src/semshare/encoder.py) |
+| Path ORAM client | Owns encrypted buckets, position map, stash, remapping and workspace revision. | [`oram.py`](research/semantic-sharing/src/semshare/oram.py) |
+| Sidecar pair and object store | Store each randomized share separately and serve bounded loopback object requests. | [`oram.py`](research/semantic-sharing/src/semshare/oram.py), [`sidecar.py`](research/semantic-sharing/src/semshare/sidecar.py) |
+| Workspace and sessions | Isolate corpus state, session deltas and immutable merged epochs. | [`workspace.py`](research/semantic-sharing/src/semshare/workspace.py), [`lifecycle.py`](research/semantic-sharing/src/semshare/lifecycle.py) |
+
+Execution journey:
+
+1. The owner uploads a bounded UTF-8 document through the existing app and creates a share.
+2. The [trusted client](#trusted-client) downloads the share, decrypts it and checks that the bytes match the input. Tampered ciphertext must fail [authenticated encryption](#authenticated-encryption).
+3. The pinned encoder creates an [embedding](#embedding). The client packs file and share references, key material, vector and content hashes into one bounded index record.
+4. ORAM encrypts each bucket and writes an XOR mask and complementary bytes to the two loopback sidecars. If the second write fails, it attempts to delete the first sidecar's object.
+5. A recipient imports an explicit share link into a separate corpus. Searches read and decrypt the needed index representation locally, then compute ranking on the trusted client.
+6. A session delta can be merged into an immutable epoch. App revocation blocks later downloads but cannot revoke a key or plaintext already copied by a recipient.
+
+| Choice in the current implementation | Practical rationale | Alternative and cost to reconsider |
+| --- | --- | --- |
+| Keep the app's existing sharing API as the file authority. | Exercises real authentication, ciphertext and revocation paths without replacing SecuShare. | A separate file service would no longer validate app integration. |
+| Encode and rank on the trusted client. | Plaintext, keys and vectors remain available to the client that needs them. | Server-side ranking exposes more data or requires a different cryptographic protocol. |
+| Use fixed-size encrypted buckets and a bounded Path ORAM index. | Hides record contents and uses explicit capacity limits in this research prototype. | A different index may reduce scans but changes its access-pattern and state model. |
+| Split bucket bytes with XOR across two sidecars. | Demonstrates separated object storage with a small local client implementation. | This is not MPC: both shares together reconstruct the bucket, and the design provides no formal non-collusion guarantee. |
+| Bind sidecars to loopback and local run state. | Keeps this demonstration within owned local processes and avoids exposing its simple object service. | Remote deployment requires transport authentication, threat analysis and a reviewed protocol. |
+
+These rationales are inferred from the current code. The design is a local research prototype, not a production security architecture.
+
+<a id="trusted-client"></a>
+
+<details><summary>What is a trusted client?</summary>
+
+A trusted client is the machine allowed to see plaintext and keys while performing operations for the user. Here, the Python process decrypts app shares, embeds text and ranks search results. The sidecars do not perform those steps.
+</details>
+
+<a id="path-oram"></a>
+
+<details><summary>What is Path ORAM?</summary>
+
+Path ORAM stores encrypted blocks in a tree and remaps a block to a random leaf when accessed. This code bounds an index to 1024 records and keeps a local position map and stash; the snapshot scan reads buckets in numeric order and does not hide that full-tree trace.
+</details>
+
+<a id="sidecar-share"></a>
+
+<details><summary>What is an XOR sidecar share?</summary>
+
+An XOR sidecar share is one of two byte strings whose bitwise XOR reconstructs a bucket. `SidecarPair` stores a random mask on one service and bucket XOR mask on the other. This storage split is not MPC and does not establish security if the parties collude.
+</details>
+
+<a id="authenticated-encryption"></a>
+
+<details><summary>What is authenticated encryption?</summary>
+
+Authenticated encryption protects data and detects changes made without the key. The app client uses AES-GCM for shared files; a tampered ciphertext is rejected rather than returned as valid plaintext.
+</details>
+
+<a id="embedding"></a>
+
+<details><summary>What is an embedding?</summary>
+
+An embedding is a numeric vector representing text for similarity comparisons. This client creates it locally with the pinned MiniLM encoder and stores its packed float32 values in the encrypted index record.
+</details>
+
+<a id="session-delta"></a>
+
+<details><summary>What is a session delta?</summary>
+
+A session delta is a private set of index changes made in one recipient session before they are merged. The client keeps session namespaces separate so one recipient's local corpus changes do not automatically enter another's search state.
+</details>
+
+<a id="revocation-limit"></a>
+
+<details><summary>What is the revocation limit?</summary>
+
+Revocation prevents future downloads through the app's share API. It cannot erase plaintext or a key already copied by a recipient, so this client keeps the secret in its local state and explicit share link.
+</details>
+
 ## Run and verify
 
 See [research client setup and commands](research/semantic-sharing/README.md) and the [maintained verification skill](.agents/skills/verify-encrypted-semantic-sharing/SKILL.md). Native app verification needs Python 3.11, Go with CGO, and a C compiler. The driver launches only synthetic documents and loopback services, then preserves evidence while cleaning its own processes and scratch data.
