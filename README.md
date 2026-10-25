@@ -6,6 +6,573 @@ The added workflow combines client-side AES-GCM, a pinned MiniLM encoder, bounde
 
 ## Architecture and execution guide
 
+<!-- execution-flow:start -->
+### Execution flow
+
+Start with the primary path, then expand a detailed workflow. Select a numbered node to see its operation, implementation techniques, and source. Solid arrows show the named control, data, or lifecycle handoff; dotted arrows show error paths. Separate entry points are named in each workflow.
+
+<a id="review-walkthrough"></a>
+
+#### Walk through one concrete example
+
+Run the owner-side sharing and indexing workflow for a text document, placing its encoded record in the owner session corpus.
+
+**Trace.** [Encrypt and share document](#flow-step-encrypt-upload-share) → [Authorize share download](#flow-step-share-download-gates) → [Encode sentence locally](#flow-step-encode-text) → [Pack bounded index record](#flow-step-index-record) → [Add record to private session delta](#flow-step-session-delta).
+
+**Result and boundary.** The client encrypts and shares the document, verifies its ciphertext round trip, encodes the recovered text locally, and adds a bounded record to a private session delta. Search and epoch merge are separate calls. The file server does not automatically embed uploads, and the recipient still needs the fragment key.
+
+<details>
+<summary>Implementation decisions to explain</summary>
+
+**Why encrypt the document before sending it through the API?** Encryption keeps plaintext on the client side of the sharing boundary while the service handles ciphertext. The recipient needs the separately conveyed fragment key to decrypt.
+
+[Client-side AES-GCM and fragment key handoff](#technique-client-encryption).
+
+**Why put the new record in a session delta?** The private delta captures new records before an immutable merged epoch is published. This supports incremental updates but means a delta is distinct from a fully activated searchable snapshot.
+
+[Session-private deltas and isolated visibility](#technique-session-epoch-merge).
+
+</details>
+
+#### Primary execution flow
+
+Owner workflow called by _drive. API request is a called transport boundary.
+
+```mermaid
+flowchart TD
+    n3["3. Encrypt and share document"]
+    click n3 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-encrypt-upload-share" "Open step, techniques, and source" _top
+    n2["2. Send same-origin API request"]
+    click n2 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-api-request" "Open step, techniques, and source" _top
+    n4["4. Authorize share download"]
+    click n4 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-share-download-gates" "Open step, techniques, and source" _top
+    n7["7. Encode sentence locally"]
+    click n7 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-encode-text" "Open step, techniques, and source" _top
+    n6["6. Pack bounded index record"]
+    click n6 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-index-record" "Open step, techniques, and source" _top
+    n12["12. Add record to private<br/>session delta"]
+    click n12 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-session-delta" "Open step, techniques, and source" _top
+    n23["23. Propagate operation failure"]
+    click n23 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-operation-failure" "Open step, techniques, and source" _top
+    n3 -->|"Upload, create-share and download<br/>helpers invoke request"| n2
+    n3 -->|"Request shared ciphertext round trip"| n4
+    n4 -->|"Authorized ciphertext is decrypted and<br/>verified before encoding"| n7
+    n7 -->|"Computed vector passed to<br/>create_index_record"| n6
+    n6 -->|"_drive passes returned reference and<br/>record to workspace.add"| n12
+    n4 -.->|"Availability or credential gate<br/>rejects download"| n23
+```
+
+**Detailed workflows.** [Verified owner ingestion](#flow-workflow-owner-ingestion) · [Explicit recipient import](#flow-workflow-recipient-import) · [Create or append a session index](#flow-workflow-delta-storage) · [Read and remap one block](#flow-workflow-logical-read) · [Search an authenticated snapshot](#flow-workflow-search) · [Build and activate a new epoch](#flow-workflow-epoch-merge) · [Revoke future downloads](#flow-workflow-revocation) · [Synthetic verification calls](#flow-workflow-verification) · [Independent lifecycle commands](#flow-workflow-lifecycle).
+
+<a id="flow-workflow-owner-ingestion"></a>
+
+<details>
+<summary>Verified owner ingestion</summary>
+
+Owner workflow called by _drive. API request is a called transport boundary.
+
+```mermaid
+flowchart TD
+    n3["3. Encrypt and share document"]
+    click n3 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-encrypt-upload-share" "Open step, techniques, and source" _top
+    n2["2. Send same-origin API request"]
+    click n2 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-api-request" "Open step, techniques, and source" _top
+    n4["4. Authorize share download"]
+    click n4 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-share-download-gates" "Open step, techniques, and source" _top
+    n7["7. Encode sentence locally"]
+    click n7 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-encode-text" "Open step, techniques, and source" _top
+    n6["6. Pack bounded index record"]
+    click n6 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-index-record" "Open step, techniques, and source" _top
+    n12["12. Add record to private<br/>session delta"]
+    click n12 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-session-delta" "Open step, techniques, and source" _top
+    n23["23. Propagate operation failure"]
+    click n23 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-operation-failure" "Open step, techniques, and source" _top
+    n3 -->|"Upload, create-share and download<br/>helpers invoke request"| n2
+    n3 -->|"Request shared ciphertext round trip"| n4
+    n4 -->|"Authorized ciphertext is decrypted and<br/>verified before encoding"| n7
+    n7 -->|"Computed vector passed to<br/>create_index_record"| n6
+    n6 -->|"_drive passes returned reference and<br/>record to workspace.add"| n12
+    n4 -.->|"Availability or credential gate<br/>rejects download"| n23
+```
+
+</details>
+
+<a id="flow-workflow-recipient-import"></a>
+
+<details>
+<summary>Explicit recipient import</summary>
+
+Recipient imports an explicit link into a separate corpus.
+
+```mermaid
+flowchart TD
+    n5["5. Read fragment key and decrypt"]
+    click n5 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-parse-fragment-decrypt" "Open step, techniques, and source" _top
+    n2["2. Send same-origin API request"]
+    click n2 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-api-request" "Open step, techniques, and source" _top
+    n4["4. Authorize share download"]
+    click n4 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-share-download-gates" "Open step, techniques, and source" _top
+    n7["7. Encode sentence locally"]
+    click n7 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-encode-text" "Open step, techniques, and source" _top
+    n6["6. Pack bounded index record"]
+    click n6 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-index-record" "Open step, techniques, and source" _top
+    n12["12. Add record to private<br/>session delta"]
+    click n12 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-session-delta" "Open step, techniques, and source" _top
+    n23["23. Propagate operation failure"]
+    click n23 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-operation-failure" "Open step, techniques, and source" _top
+    n5 -->|"download_share invokes request without<br/>URL fragment"| n2
+    n5 -->|"POST parsed share identifier"| n4
+    n4 -->|"Decrypted public_copy becomes<br/>recipient encoder input"| n7
+    n7 -->|"recipient_vector passed to record<br/>builder"| n6
+    n6 -->|"recipient_payload passed to separate<br/>recipient workspace"| n12
+    n4 -.->|"Availability or credential gate<br/>rejects download"| n23
+```
+
+</details>
+
+<a id="flow-workflow-delta-storage"></a>
+
+<details>
+<summary>Create or append a session index</summary>
+
+Creation and append are distinct from a logical read.
+
+```mermaid
+flowchart TD
+    n12["12. Add record to private<br/>session delta"]
+    click n12 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-session-delta" "Open step, techniques, and source" _top
+    n21["21. Build an encrypted index<br/>tree"]
+    click n21 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-oram-create" "Open step, techniques, and source" _top
+    n20["20. Append to an existing delta"]
+    click n20 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-oram-append" "Open step, techniques, and source" _top
+    n19["19. Reconstruct bounded bucket<br/>bytes"]
+    click n19 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-sidecar-read" "Open step, techniques, and source" _top
+    n10["10. Split and publish bucket<br/>shares"]
+    click n10 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-sidecar-xor-write" "Open step, techniques, and source" _top
+    n11["11. Authenticate and replace<br/>manifest"]
+    click n11 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-manifest-state" "Open step, techniques, and source" _top
+    n12 -->|"Missing base or first delta calls<br/>create"| n21
+    n12 -->|"Existing delta calls append"| n20
+    n20 -->|"_read_path fetches old path buckets"| n19
+    n20 -->|"_commit_path writes replacement pairs<br/>after eviction"| n10
+    n21 -->|"Write all initial bucket pairs"| n10
+    n10 -->|"All object pairs succeed before<br/>manifest save"| n11
+```
+
+</details>
+
+<a id="flow-workflow-logical-read"></a>
+
+<details>
+<summary>Read and remap one block</summary>
+
+Independent logical read, exercised by verification; semantic search uses records snapshots.
+
+```mermaid
+flowchart TD
+    n9["9. Read ORAM path and remap<br/>block"]
+    click n9 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-oram-read-remap" "Open step, techniques, and source" _top
+    n8["8. Lock local ORAM state"]
+    click n8 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-oram-lock" "Open step, techniques, and source" _top
+    n19["19. Reconstruct bounded bucket<br/>bytes"]
+    click n19 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-sidecar-read" "Open step, techniques, and source" _top
+    n10["10. Split and publish bucket<br/>shares"]
+    click n10 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-sidecar-xor-write" "Open step, techniques, and source" _top
+    n11["11. Authenticate and replace<br/>manifest"]
+    click n11 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-manifest-state" "Open step, techniques, and source" _top
+    n23["23. Propagate operation failure"]
+    click n23 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-operation-failure" "Open step, techniques, and source" _top
+    n9 -->|"Enter FileLock before loading state"| n8
+    n8 -->|"Read authenticated path after manifest<br/>load"| n19
+    n19 -->|"Remap and evict before writing<br/>replacement path"| n10
+    n10 -->|"Publish manifest after all replacement<br/>pairs"| n11
+    n8 -.->|"Acquisition timeout raises ORAMError"| n23
+    n19 -.->|"Block authentication failure<br/>propagates"| n23
+    n10 -.->|"Second write failure compensates first<br/>or reports compensation failure"| n23
+```
+
+</details>
+
+<a id="flow-workflow-search"></a>
+
+<details>
+<summary>Search an authenticated snapshot</summary>
+
+No automatic search-to-merge handoff exists.
+
+```mermaid
+flowchart TD
+    n22["22. Search one session corpus"]
+    click n22 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-workspace-search" "Open step, techniques, and source" _top
+    n13["13. Read authenticated full-tree<br/>snapshot"]
+    click n13 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-full-tree-snapshot" "Open step, techniques, and source" _top
+    n19["19. Reconstruct bounded bucket<br/>bytes"]
+    click n19 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-sidecar-read" "Open step, techniques, and source" _top
+    n14["14. Rank records with cosine<br/>top-k"]
+    click n14 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-exact-ranking" "Open step, techniques, and source" _top
+    n22 -->|"Gather base.records and optional<br/>delta.records"| n13
+    n13 -->|"Fetch every node bucket"| n19
+    n13 -->|"Authenticated candidates become ranked<br/>results"| n14
+```
+
+</details>
+
+<a id="flow-workflow-epoch-merge"></a>
+
+<details>
+<summary>Build and activate a new epoch</summary>
+
+Separate merge operation. Failed create attempts local staging cleanup; remote objects have no general rollback.
+
+```mermaid
+flowchart TD
+    n15["15. Publish immutable merged<br/>epoch"]
+    click n15 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-epoch-merge" "Open step, techniques, and source" _top
+    n13["13. Read authenticated full-tree<br/>snapshot"]
+    click n13 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-full-tree-snapshot" "Open step, techniques, and source" _top
+    n21["21. Build an encrypted index<br/>tree"]
+    click n21 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-oram-create" "Open step, techniques, and source" _top
+    n10["10. Split and publish bucket<br/>shares"]
+    click n10 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-sidecar-xor-write" "Open step, techniques, and source" _top
+    n11["11. Authenticate and replace<br/>manifest"]
+    click n11 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-manifest-state" "Open step, techniques, and source" _top
+    n15 -->|"Collect base and delta records"| n13
+    n13 -->|"Validate duplicate references then<br/>build new tree"| n21
+    n21 -->|"Write all immutable target buckets"| n10
+    n10 -->|"Finish index manifest before workspace<br/>pointer save"| n11
+```
+
+</details>
+
+<a id="flow-workflow-revocation"></a>
+
+<details>
+<summary>Revoke future downloads</summary>
+
+Independent owner API call. Already obtained copies and keys remain available.
+
+```mermaid
+flowchart TD
+    n16["16. Deactivate share for future<br/>downloads"]
+    click n16 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-revoke-share" "Open step, techniques, and source" _top
+    n2["2. Send same-origin API request"]
+    click n2 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-api-request" "Open step, techniques, and source" _top
+    n16 -->|"DELETE share request"| n2
+```
+
+</details>
+
+<a id="flow-workflow-verification"></a>
+
+<details>
+<summary>Synthetic verification calls</summary>
+
+Edges show explicit verifier calls, not automatic operation handoffs.
+
+```mermaid
+flowchart TD
+    n17["17. Write workflow evidence"]
+    click n17 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-drive-evidence" "Open step, techniques, and source" _top
+    n3["3. Encrypt and share document"]
+    click n3 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-encrypt-upload-share" "Open step, techniques, and source" _top
+    n22["22. Search one session corpus"]
+    click n22 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-workspace-search" "Open step, techniques, and source" _top
+    n15["15. Publish immutable merged<br/>epoch"]
+    click n15 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-epoch-merge" "Open step, techniques, and source" _top
+    n5["5. Read fragment key and decrypt"]
+    click n5 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-parse-fragment-decrypt" "Open step, techniques, and source" _top
+    n16["16. Deactivate share for future<br/>downloads"]
+    click n16 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-revoke-share" "Open step, techniques, and source" _top
+    n9["9. Read ORAM path and remap<br/>block"]
+    click n9 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-oram-read-remap" "Open step, techniques, and source" _top
+    n17 -->|"Upload synthetic documents"| n3
+    n17 -->|"Check delta and merged-base ranking"| n22
+    n17 -->|"Explicitly call merge"| n15
+    n17 -->|"Import explicit recipient share link"| n5
+    n17 -->|"Deactivate owner share"| n16
+    n17 -->|"Compare logical read message shapes"| n9
+```
+
+</details>
+
+<a id="flow-workflow-lifecycle"></a>
+
+<details>
+<summary>Independent lifecycle commands</summary>
+
+launch and cleanup are independent main command branches. drive requires launched state and calls doctor; ordinary drive does not call cleanup.
+
+```mermaid
+flowchart TD
+    n1["1. Launch isolated app and<br/>sidecars"]
+    click n1 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-owned-launch" "Open step, techniques, and source" _top
+    n18["18. Stop owned processes and<br/>clean run data"]
+    click n18 href "https://github.com/STEVVVU/encrypted-semantic-file-sharing#flow-step-owned-cleanup" "Open step, techniques, and source" _top
+```
+
+</details>
+
+#### Steps, techniques, and source
+
+These source traces cover the active scope below. They explain implementation behavior; benchmark results and their limits remain in the measurement sections.
+
+<a id="flow-step-owned-launch"></a>
+
+##### 1. Launch isolated app and sidecars
+
+**Component.** lifecycle.start. The launcher starts the configured app and two sidecars for a validated run ID, records owned process identities and run configuration, and keeps run data in the isolated run directory. Doctor checks the exact processes and loopback endpoints before drive proceeds.
+
+**Techniques at this step.** [Owned-process launch and identity-checked cleanup](#technique-owned-run-lifecycle).
+
+**Source.** [`research/semantic-sharing/src/semshare/lifecycle.py:33`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/lifecycle.py#L33). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-api-request"></a>
+
+##### 2. Send same-origin API request
+
+**Component.** SecuShareClient.request. The client validates its fixed loopback API origin and applies session and CSRF headers. HTTP errors return bounded status/header/body data to the caller; transport errors raise AppError. Cross-origin redirects are refused.
+
+**Techniques at this step.** [Loopback API and CSRF request boundary](#technique-api-origin-csrf-boundary).
+
+**Source.** [`research/semantic-sharing/src/semshare/app_client.py:43`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/app_client.py#L43) · [`research/semantic-sharing/src/semshare/app_client.py:68`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/app_client.py#L68). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-encrypt-upload-share"></a>
+
+##### 3. Encrypt and share document
+
+**Component.** SecuShareClient.upload_encrypted and workflow.upload_share_and_embed. The client encrypts plaintext with AES-GCM, uploads ciphertext, creates a share, then downloads the share and verifies that decryption reproduces the input bytes. The share key remains client-side and is placed in the URL fragment for recipient handoff.
+
+**Techniques at this step.** [Client-side AES-GCM and fragment key handoff](#technique-client-encryption) · [Authenticated share round-trip verification](#technique-verified-share-roundtrip).
+
+**Source.** [`research/semantic-sharing/src/semshare/app_client.py:104`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/app_client.py#L104) · [`research/semantic-sharing/src/semshare/workflow.py:27`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workflow.py#L27) · [`research/semantic-sharing/src/semshare/workflow.py:76`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workflow.py#L76). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-share-download-gates"></a>
+
+##### 4. Authorize share download
+
+**Component.** ShareHandler.DownloadFile and ShareService.GetFile. The public-share handler parses optional password, requester email and verification code, then GetFile checks active status, expiry, download limit, password and any required email verification. The repository atomically rechecks availability while incrementing download count before file lookup. Errors map to HTTP failures; this handler does not obtain an authenticated owner identity.
+
+**Techniques at this step.** [Server-enforced share expiry, download limits, and revocation](#technique-share-availability-gates).
+
+**Source.** [`backend/internal/handler/share_handler.go:324`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/backend/internal/handler/share_handler.go#L324) · [`backend/internal/service/share_service.go:256`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/backend/internal/service/share_service.go#L256) · [`backend/internal/service/share_service.go:311`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/backend/internal/service/share_service.go#L311) · [`backend/internal/repository/share_repository.go:105`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/backend/internal/repository/share_repository.go#L105). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-parse-fragment-decrypt"></a>
+
+##### 5. Read fragment key and decrypt
+
+**Component.** SecuShareClient.parse_share_link and download_share. The recipient parses the share ID from the path and the AES key from the URL fragment, which is not sent in the HTTP request. The client downloads ciphertext and decrypts it locally; a wrong key or authentication tag failure rejects the plaintext.
+
+**Techniques at this step.** [Client-side AES-GCM and fragment key handoff](#technique-client-encryption) · [Authenticated share round-trip verification](#technique-verified-share-roundtrip).
+
+**Source.** [`research/semantic-sharing/src/semshare/app_client.py:168`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/app_client.py#L168) · [`research/semantic-sharing/src/semshare/app_client.py:139`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/app_client.py#L139). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-index-record"></a>
+
+##### 6. Pack bounded index record
+
+**Component.** workflow.create_index_record. The workflow packs file and share identifiers, filename, nonce, key material, vector, and integrity data into the fixed-size record format. The size limit rejects records that do not fit the configured slot.
+
+**Techniques at this step.** [Fixed-size index record packing](#technique-bounded-index-record).
+
+**Source.** [`research/semantic-sharing/src/semshare/workflow.py:56`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workflow.py#L56). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-encode-text"></a>
+
+##### 7. Encode sentence locally
+
+**Component.** SentenceEncoder.encode. The pinned local model produces token embeddings; the encoder masks padding, computes a mean over valid tokens, and normalizes each output vector. The workflow uses the local vector for index insertion and query ranking.
+
+**Techniques at this step.** [Masked mean pooling and vector normalization](#technique-model-mean-pooling).
+
+**Source.** [`research/semantic-sharing/src/semshare/encoder.py:32`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/encoder.py#L32). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-oram-lock"></a>
+
+##### 8. Lock local ORAM state
+
+**Component.** FileLock.__enter__. The client acquires its process and file lock with a bounded wait before loading or changing ORAM state. Lock acquisition timeout aborts the operation; the context manager releases the lock on exit.
+
+**Techniques at this step.** [Bounded process and file locking](#technique-client-state-lock).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:176`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L176) · [`research/semantic-sharing/src/semshare/oram.py:210`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L210). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-oram-read-remap"></a>
+
+##### 9. Read ORAM path and remap block
+
+**Component.** PathORAM.read. PathORAM.read locks and authenticates state, fetches an assigned or random path, remaps a known block, evicts eligible stash blocks and commits replacement buckets. Missing or malformed identifiers perform a random-path access and return None. Workspace.search uses full records snapshots, not remapping reads.
+
+**Techniques at this step.** [Path ORAM remapping and bottom-up eviction](#technique-path-oram-access) · [Padded fixed-slot authenticated buckets](#technique-fixed-slot-aead).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:329`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L329) · [`research/semantic-sharing/src/semshare/oram.py:421`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L421) · [`research/semantic-sharing/src/semshare/oram.py:453`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L453). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-sidecar-xor-write"></a>
+
+##### 10. Split and publish bucket shares
+
+**Component.** SidecarPair.put and ObjectStore.put. The trusted client creates a random share and XORs it with the bucket bytes to form the second share, then sends one bounded frame to each loopback sidecar. Each object store publishes with no-overwrite atomic creation; a partial pair failure triggers compensation where implemented.
+
+**Techniques at this step.** [Random XOR share publication with compensation](#technique-xor-share-splitting) · [Pooled HTTP with strict sidecar frame bounds](#technique-bounded-sidecar-transport) · [Atomic no-overwrite sidecar object publication](#technique-atomic-sidecar-object-write).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:140`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L140) · [`research/semantic-sharing/src/semshare/oram.py:78`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L78) · [`research/semantic-sharing/src/semshare/sidecar.py:27`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/sidecar.py#L27). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-manifest-state"></a>
+
+##### 11. Authenticate and replace manifest
+
+**Component.** PathORAM._save_state and _load_state. Open and operations authenticate the manifest before use. _commit_path writes all new bucket pairs before atomically replacing the encrypted local manifest, then deletes old objects. Delete failures increment gc_failures; multi-object writes have no general remote rollback.
+
+**Techniques at this step.** [Authenticated manifest validation and atomic replacement](#technique-authenticated-manifest).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:482`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L482) · [`research/semantic-sharing/src/semshare/oram.py:496`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L496). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-session-delta"></a>
+
+##### 12. Add record to private session delta
+
+**Component.** Workspace.add. Workspace.add locks and authenticates workspace state, creates an empty session-specific base if needed, then creates the first delta or appends to an existing delta. Search and merge are separate calls. Each session has its own active base pointer.
+
+**Techniques at this step.** [Session-private deltas and isolated visibility](#technique-session-epoch-merge).
+
+**Source.** [`research/semantic-sharing/src/semshare/workspace.py:62`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workspace.py#L62) · [`research/semantic-sharing/src/semshare/workspace.py:84`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workspace.py#L84). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-full-tree-snapshot"></a>
+
+##### 13. Read authenticated full-tree snapshot
+
+**Component.** PathORAM.records and _snapshot. The query path reads and authenticates the full ORAM tree snapshot, reconstructing all records for a consistent local scan. It does not claim that the sidecars cannot observe access metadata.
+
+**Techniques at this step.** [Authenticated full-tree read-only snapshots](#technique-full-tree-snapshot).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:354`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L354) · [`research/semantic-sharing/src/semshare/oram.py:363`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L363). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-exact-ranking"></a>
+
+##### 14. Rank records with cosine top-k
+
+**Component.** Workspace.search and encoder.cosine. The client computes cosine scores against the local query vector and sorts the complete candidate set to return the requested top results. A fresh plaintext-vector oracle in the verification drive checks ranking and scores for the synthetic corpus.
+
+**Techniques at this step.** [Exact cosine top-k with a fresh oracle](#technique-embedding-ranking).
+
+**Source.** [`research/semantic-sharing/src/semshare/workspace.py:84`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workspace.py#L84) · [`research/semantic-sharing/src/semshare/encoder.py:56`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/encoder.py#L56). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-epoch-merge"></a>
+
+##### 15. Publish immutable merged epoch
+
+**Component.** Workspace.merge and _save. Merge writes the session's merged records as a new immutable epoch, then switches the active epoch pointer only after the new snapshot succeeds. On failure the old epoch remains active; the previous epoch is retained for the merge result.
+
+**Techniques at this step.** [Session-private deltas and isolated visibility](#technique-session-epoch-merge) · [Immutable epoch publication with failure rollback](#technique-immutable-snapshots).
+
+**Source.** [`research/semantic-sharing/src/semshare/workspace.py:113`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workspace.py#L113) · [`research/semantic-sharing/src/semshare/workspace.py:166`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workspace.py#L166). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-revoke-share"></a>
+
+##### 16. Deactivate share for future downloads
+
+**Component.** SecuShareClient.deactivate_share and ShareService.Deactivate. The owner requests share deactivation through the API. Subsequent status or download requests observe the inactive share and fail; revocation cannot erase ciphertext, plaintext, or keys a recipient already obtained.
+
+**Techniques at this step.** [Server-enforced share expiry, download limits, and revocation](#technique-share-availability-gates).
+
+**Source.** [`research/semantic-sharing/src/semshare/app_client.py:222`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/app_client.py#L222) · [`backend/internal/service/share_service.go:752`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/backend/internal/service/share_service.go#L752). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-drive-evidence"></a>
+
+##### 17. Write workflow evidence
+
+**Component.** cli.drive and _drive. drive calls doctor and runs synthetic upload, search, merge, recipient, revocation and ORAM assertions. The CLI atomically saves the successful report or attempts to save failure details. Launch and ordinary cleanup are separate commands.
+
+**Techniques at this step.** [Authenticated share round-trip verification](#technique-verified-share-roundtrip) · [Exact cosine top-k with a fresh oracle](#technique-embedding-ranking).
+
+**Source.** [`research/semantic-sharing/src/semshare/cli.py:40`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/cli.py#L40) · [`research/semantic-sharing/src/semshare/cli.py:281`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/cli.py#L281). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-owned-cleanup"></a>
+
+##### 18. Stop owned processes and clean run data
+
+**Component.** lifecycle.cleanup. Cleanup verifies each process against the recorded ownership identity before stopping it and removes only the matching isolated run data. It preserves evidence separately; an ownership mismatch prevents stopping an unrelated process.
+
+**Techniques at this step.** [Owned-process launch and identity-checked cleanup](#technique-owned-run-lifecycle).
+
+**Source.** [`research/semantic-sharing/src/semshare/lifecycle.py:187`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/lifecycle.py#L187) · [`research/semantic-sharing/src/semshare/lifecycle.py:303`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/lifecycle.py#L303). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-sidecar-read"></a>
+
+##### 19. Reconstruct bounded bucket bytes
+
+**Component.** SidecarPair.get. SidecarPair.get fetches each assigned object through bounded loopback HTTP and XORs the bytes. Path and full-tree readers authenticate the reconstructed AEAD slots before accepting records.
+
+**Techniques at this step.** [Random XOR share publication with compensation](#technique-xor-share-splitting) · [Pooled HTTP with strict sidecar frame bounds](#technique-bounded-sidecar-transport).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:152`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L152). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-oram-append"></a>
+
+##### 20. Append to an existing delta
+
+**Component.** PathORAM.append. append locks and loads state, checks capacity, revision and duplicate references, reads a random path, inserts a fresh randomly assigned block and evicts before _commit_path.
+
+**Techniques at this step.** [Path ORAM remapping and bottom-up eviction](#technique-path-oram-access) · [Padded fixed-slot authenticated buckets](#technique-fixed-slot-aead).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:308`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L308). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-oram-create"></a>
+
+##### 21. Build an encrypted index tree
+
+**Component.** PathORAM.create. create validates bounded records and capacity, generates keys and random block identities and leaves, fills all buckets with real or dummy AEAD slots, writes the bucket pairs and saves the manifest.
+
+**Techniques at this step.** [Padded fixed-slot authenticated buckets](#technique-fixed-slot-aead) · [Immutable epoch publication with failure rollback](#technique-immutable-snapshots).
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:240`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L240). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-workspace-search"></a>
+
+##### 22. Search one session corpus
+
+**Component.** Workspace.search. Workspace.search validates the query, holds the workspace lock and opens only that session's base and delta. It gathers full-tree records before scoring and sorting.
+
+**Techniques at this step.** [Session-private deltas and isolated visibility](#technique-session-epoch-merge).
+
+**Source.** [`research/semantic-sharing/src/semshare/workspace.py:84`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/workspace.py#L84). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-operation-failure"></a>
+
+##### 23. Propagate operation failure
+
+**Component.** SidecarPair.put. Bounds, authentication, transport and lock timeout errors propagate. Second-side write failure attempts to delete the first share; compensation failure is reported. Ordinary drive failure does not automatically run cleanup.
+
+Explicit operation boundary or terminal error, with no separate ledger technique.
+
+**Source.** [`research/semantic-sharing/src/semshare/oram.py:140`](https://github.com/STEVVVU/encrypted-semantic-file-sharing/blob/main/research/semantic-sharing/src/semshare/oram.py#L140). [Back to execution flow](#execution-flow).
+
+<details>
+<summary>Scope and subsystem coverage</summary>
+
+The research semantic-sharing client, directly used SecuShare share upload/download/revocation gates, local ORAM and sidecar storage, session and epoch operations, and owned-run launch and cleanup. The workflow assumes trusted clients and does not claim formal security or sidecar non-collusion.
+
+- **SecuShare API boundary and client key handoff.** The client constrains request origin, keeps the key in the URL fragment, and verifies local decryption after API download. [Step 2](#flow-step-api-request), [Step 3](#flow-step-encrypt-upload-share), [Step 5](#flow-step-parse-fragment-decrypt).
+- **Share authorization, limits, and revocation.** The Go handler and service gate downloads and atomically enforce limits; deactivation blocks future downloads. [Step 4](#flow-step-share-download-gates), [Step 16](#flow-step-revoke-share).
+- **Verified ingestion and bounded index record layout.** Authenticated round-trip precedes fixed-size record packing. [Step 3](#flow-step-encrypt-upload-share), [Step 5](#flow-step-parse-fragment-decrypt), [Step 6](#flow-step-index-record).
+- **Local sentence encoding and exact semantic ranking.** Masked local pooling produces vectors; the client scans a full authenticated snapshot and ranks exact cosine scores. [Step 7](#flow-step-encode-text), [Step 13](#flow-step-full-tree-snapshot), [Step 14](#flow-step-exact-ranking), [Step 22](#flow-step-workspace-search).
+- **ORAM access, encrypted blocks, and local state coordination.** The client locks state, remaps Path ORAM blocks, authenticates fixed-slot encrypted buckets and the manifest. [Step 8](#flow-step-oram-lock), [Step 9](#flow-step-oram-read-remap), [Step 11](#flow-step-manifest-state), [Step 20](#flow-step-oram-append), [Step 21](#flow-step-oram-create), [Step 23](#flow-step-operation-failure).
+- **Two-sidecar transport and object publication.** The trusted client sends bounded XOR shares to the two sidecars, whose stores publish objects atomically without overwrite. [Step 10](#flow-step-sidecar-xor-write), [Step 19](#flow-step-sidecar-read).
+- **Private session deltas and immutable epoch activation.** Session writes stay private until a new immutable snapshot succeeds and becomes active. [Step 12](#flow-step-session-delta), [Step 15](#flow-step-epoch-merge).
+- **Owned local run lifecycle.** The CLI uses owned-run checks, records evidence, and identity-checks processes before cleanup. [Step 1](#flow-step-owned-launch), [Step 17](#flow-step-drive-evidence), [Step 18](#flow-step-owned-cleanup).
+
+Outside this flow audit:
+
+- `frontend/ and unrelated backend handlers`. The research workflow calls the share API directly; unrelated UI screens and endpoints have no runtime handoff in this path.
+- `research/semantic-sharing/src/semshare/benchmark.py and scan_benchmark.py`. These standalone measurement programs do not execute in the semantic-sharing app workflow.
+- `research/semantic-sharing/src/semshare/model_download.py`. Model setup precedes local inference and is not an index execution stage.
+
+</details>
+
+<!-- execution-flow:end -->
+
+<details>
+<summary>Subsystem technique index</summary>
+
 ### Subsystem map
 
 Select a subsystem in the diagram to open its techniques, tradeoffs, and code references. The numbered links provide the same navigation. This map groups components; the execution diagrams show their runtime flow.
@@ -41,6 +608,8 @@ flowchart LR
 8. [Owned local run lifecycle](#subsystem-owned-local-run-lifecycle)
 
 The inherited SecuShare app provides authenticated upload, share, download and revocation. The added Python research client calls those APIs, verifies share decryption, embeds text locally and stores fixed-size encrypted index blocks through two loopback sidecars. A [trusted client](#trusted-client) coordinates both sidecars. Their [XOR-split bytes](#sidecar-share) are a storage demonstration, not formal secure multiparty computation (MPC), a non-collusion guarantee or a proof against either sidecar.
+
+</details>
 
 <details>
 <summary>Expand flow diagram 1</summary>
