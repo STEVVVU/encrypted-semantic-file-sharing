@@ -6,6 +6,7 @@ The added workflow combines client-side AES-GCM, a pinned MiniLM encoder, bounde
 
 ## Guide
 
+[Implementation techniques](#implementation-techniques) ·
 [Architecture and execution guide](#architecture-and-execution-guide) · [Run and verify](#run-and-verify) · [Current index-only scan results](#current-index-only-scan-results) · [Trust and current scope](#trust-and-current-scope) · [Source and research](#source-and-research)
 
 ## Architecture and execution guide
@@ -186,3 +187,326 @@ The [index-only scan benchmark](research/semantic-sharing/README.md#index-only-s
 The full MIT-licensed SecuShare source and history are retained at upstream base `42590a03dbd1a8812ab4ad7b96e924969eea8bc0`. The original landing page is preserved as [README.upstream.md](README.upstream.md), and its original CI is retained under [archive/upstream-workflows](archive/upstream-workflows/). New code is under `research/semantic-sharing/`.
 
 The coursework reference is Berkeley CS262a's [Constellation report](https://people.eecs.berkeley.edu/~kubitron/courses/cs262a-F25/projects/reports/project1006_paper_85262889807149618246.pdf). The ORAM adaptation follows [Path ORAM](https://pages.cs.wisc.edu/~yxy/pubs/PathORam.pdf). This project does not reproduce Constellation's distributed MPC protocol or either paper's scale and performance results.
+
+## Implementation techniques
+
+This section covers the active research client, the SecuShare share API paths it calls, and the local run lifecycle. Other application endpoints and frontend screens are outside this execution path. The reasons below are inferred from current code, not historical design records. The two sidecars do not implement MPC, assume non-collusion, or provide formal security.
+
+| Subsystem | Technique cards | Source |
+| --- | --- | --- |
+| SecuShare API and client key handoff | [Loopback API and CSRF boundary](#technique-api-origin-csrf-boundary), [Client-side authenticated encryption](#technique-client-encryption), [Authenticated share round trip](#technique-verified-share-roundtrip) | [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py), [`workflow.py`](research/semantic-sharing/src/semshare/workflow.py), [`cli.py`](research/semantic-sharing/src/semshare/cli.py) |
+| Share access and revocation | [Server-enforced share availability gates](#technique-share-availability-gates) | [`share_handler.go`](backend/internal/handler/share_handler.go), [`share_service.go`](backend/internal/service/share_service.go), [`share_repository.go`](backend/internal/repository/share_repository.go), [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py) |
+| Ingest and record layout | [Authenticated share round trip](#technique-verified-share-roundtrip), [Fixed-size index record packing](#technique-bounded-index-record) | [`workflow.py`](research/semantic-sharing/src/semshare/workflow.py), [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py) |
+| Local embeddings and ranking | [Masked mean pooling](#technique-model-mean-pooling), [Cosine top-k with an oracle](#technique-embedding-ranking), [Authenticated full-tree snapshots](#technique-full-tree-snapshot) | [`encoder.py`](research/semantic-sharing/src/semshare/encoder.py), [`workspace.py`](research/semantic-sharing/src/semshare/workspace.py), [`oram.py`](research/semantic-sharing/src/semshare/oram.py) |
+| ORAM state and concurrency | [Path ORAM access](#technique-path-oram-access), [Padded authenticated bucket slots](#technique-fixed-slot-aead), [Authenticated manifest replacement](#technique-authenticated-manifest), [Bounded client state locking](#technique-client-state-lock) | [`oram.py`](research/semantic-sharing/src/semshare/oram.py) |
+| Sidecar storage and transport | [Random XOR share splitting](#technique-xor-share-splitting), [Pooled bounded HTTP transport](#technique-bounded-sidecar-transport), [Atomic sidecar object writes](#technique-atomic-sidecar-object-write) | [`oram.py`](research/semantic-sharing/src/semshare/oram.py), [`sidecar.py`](research/semantic-sharing/src/semshare/sidecar.py) |
+| Session deltas and epoch merge | [Session-private deltas](#technique-session-epoch-merge), [Immutable epoch publication](#technique-immutable-snapshots) | [`workspace.py`](research/semantic-sharing/src/semshare/workspace.py) |
+| Local verification run lifecycle | [Owned-process launch and cleanup](#technique-owned-run-lifecycle) | [`lifecycle.py`](research/semantic-sharing/src/semshare/lifecycle.py) |
+
+<a id="technique-client-encryption"></a>
+
+<details>
+<summary>Client-side authenticated encryption</summary>
+
+**Mechanism.** The client generates a content key and nonce, encrypts bytes with AES-GCM before upload, and keeps key material in the sharing link fragment. Download retrieves ciphertext and decrypts locally; GCM rejects modified ciphertext.
+
+**Example.** `AESGCM(key).encrypt(nonce, plaintext, None)` produces the upload body.
+
+**Why here.** The service stores ciphertext while the trusted client handles plaintext and key material.
+
+**Tradeoffs.** The service cannot search plaintext content. Anyone holding the link fragment can access its key; the trusted client remains in the security boundary.
+
+**Code and ownership.** [`research/semantic-sharing/src/semshare/app_client.py`](research/semantic-sharing/src/semshare/app_client.py#L104) `upload_encrypted`. Extension using cryptography.
+
+</details>
+
+<a id="technique-path-oram-access"></a>
+
+<details>
+<summary>Path ORAM bucket access</summary>
+
+**Mechanism.** The client maps each logical block to a random leaf, reads the root-to-leaf bucket path, decrypts and merges blocks into a stash, then assigns accessed blocks fresh leaves and writes the path back. Randomized shares split bucket objects across sidecars.
+
+**Example.** A lookup reads one full path even when the requested logical block is only one item.
+
+**Why here.** Fixed path access reduces direct visibility of the requested logical block to the sidecar.
+
+**Tradeoffs.** Path reads and writes move more bytes than a direct lookup. The client and its coordinator are trusted; this is not MPC.
+
+**Code and ownership.** [`research/semantic-sharing/src/semshare/oram.py`](research/semantic-sharing/src/semshare/oram.py#L1) `PathORAM`. Extension using cryptographic primitives.
+
+</details>
+
+<a id="technique-session-epoch-merge"></a>
+
+<details>
+<summary>Session-scoped epoch merge</summary>
+
+**Mechanism.** A session reads an immutable base snapshot at its epoch, stores its writes separately, and merges those writes when it commits. The merge updates only that session's immutable base epoch; it does not rewrite the shared global corpus.
+
+**Example.** Two sessions with independent bases can retain distinct updates without silently overwriting the global index.
+
+**Why here.** Session-local snapshots keep concurrent search state isolated.
+
+**Tradeoffs.** Sessions keep independent base and delta state and do not automatically observe one another's additions or merges. Session IDs partition trusted-client state; they are not authentication identities or a security boundary. The project does not claim automatic global conflict resolution.
+
+**Code and ownership.** [`research/semantic-sharing/src/semshare/workspace.py`](research/semantic-sharing/src/semshare/workspace.py) session epoch operations. Extension.
+
+</details>
+
+<a id="technique-embedding-ranking"></a>
+
+<details>
+<summary>Embedding ranking with a fresh cosine oracle</summary>
+
+**Mechanism.** The pinned sentence encoder creates normalized mean-pooled vectors. Search scores candidates by cosine similarity; the independent `cosine` helper recalculates using float64 for a separate numerical check.
+
+For encoder-produced normalized queries, the search dot product must match the oracle within `1e-6`. Ties sort by the stable file/share reference before the result limit is applied.
+
+**Example.** A query embedding is scored against stored document vectors and sorted by descending score.
+
+**Why here.** The semantic workspace needs ranked retrieval while retaining an independent check of the optimized scoring path.
+
+**Tradeoffs.** Ranking depends on the pinned model and corpus. The oracle verifies cosine calculations, not semantic relevance.
+
+**Code and ownership.** [`research/semantic-sharing/src/semshare/encoder.py`](research/semantic-sharing/src/semshare/encoder.py#L32) `encode` and line 56 `cosine`. Mixed: extension and model dependency.
+
+</details>
+
+<a id="technique-xor-share-splitting"></a>
+
+<details>
+<summary>Random XOR share splitting</summary>
+
+**Mechanism.** `SidecarPair.put` creates a random byte mask, stores it on the first sidecar, and stores the XOR of the bucket and mask on the second. `get` fetches both shares and XORs them to reconstruct the bucket. If the second write fails, the client attempts to delete the first share.
+
+**Example.** `mask XOR (bucket XOR mask)` reconstructs the bucket byte for byte.
+
+**Why here.** Either sidecar alone lacks the plaintext bucket bytes when the mask is random.
+
+**Tradeoffs.** Reads require both sidecars. A failed compensation can leave an incomplete pair, and this scheme does not hide access patterns from the trusted client.
+
+**Code and ownership.** [`research/semantic-sharing/src/semshare/oram.py`](research/semantic-sharing/src/semshare/oram.py#L140) `SidecarPair.put` and `SidecarPair.get`. Extension.
+
+</details>
+
+<a id="technique-immutable-snapshots"></a>
+
+<details>
+<summary>Immutable ORAM snapshots</summary>
+
+**Mechanism.** A merge writes the combined base and session delta into a fresh epoch directory, then changes that session's active epoch pointer. The prior epoch remains stored. Readers open the epoch selected by their session state.
+
+**Example.** `Workspace.merge` assigns a new `e-...` directory to `active_epochs[session_id]` after `PathORAM.create` succeeds.
+
+**Why here.** Building a complete epoch before pointer replacement avoids exposing a partially merged index.
+
+**Tradeoffs.** Old epochs consume storage and cleanup is not part of this merge operation. A failed sidecar write can leave unreferenced remote objects, and remote garbage collection is not implemented. Epoch publication is local state, not a shared global corpus update.
+
+**Code and ownership.** [`research/semantic-sharing/src/semshare/workspace.py`](research/semantic-sharing/src/semshare/workspace.py#L113) `Workspace.merge`. Extension.
+
+</details>
+
+<a id="technique-api-origin-csrf-boundary"></a>
+
+<details>
+<summary>Loopback API and CSRF request boundary</summary>
+
+**Mechanism.** `SecuShareClient` accepts only the local IPv4 API URL at `/api/v1`, rejects path traversal, and pins the origin for later requests. It attaches the guest bearer token and, on state-changing requests, validates the CSRF token before sending it in both the header and cookie. Its redirect handler refuses a different origin.
+
+**Example.** A `POST /shares/` carries the current bearer token and matching `X-CSRF-Token` and `csrf_token` cookie.
+
+**Why here.** The research client exercises the existing app API while keeping credentials and cookies within its local app boundary.
+
+**Tradeoffs.** The adapter supports only local HTTP. It does not provide a remote deployment transport or TLS policy.
+
+**Code and ownership.** [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py#L23) `_validate_api_base`, [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py#L43) `redirect_request`, and [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py#L68) `request`. Extension.
+
+</details>
+
+<a id="technique-verified-share-roundtrip"></a>
+
+<details>
+<summary>Authenticated share round-trip verification</summary>
+
+**Mechanism.** The workflow encrypts and uploads the source bytes, creates a real app share, downloads its ciphertext, checks the response checksum and nonce, then decrypts with AES-GCM. It compares recovered bytes with the original before embedding. It also flips one ciphertext bit and one nonce bit and requires both decryptions to fail authentication.
+
+**Example.** `if decrypted != plaintext: raise RuntimeError(...)` prevents an unverified download from entering the index.
+
+**Why here.** The semantic index should refer to the bytes recovered through the same app share path a recipient uses.
+
+**Tradeoffs.** Ingest adds a share download and local verification work. The workflow proves the exercised documents and path, not every app configuration.
+
+**Code and ownership.** [`workflow.py`](research/semantic-sharing/src/semshare/workflow.py#L27) `upload_share_and_embed`, [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py#L139) `download_share`, and [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py#L196) `verify_tamper_rejection`. Extension.
+
+</details>
+
+<a id="technique-share-availability-gates"></a>
+
+<details>
+<summary>Server-enforced share expiry, download limits, and revocation</summary>
+
+**Mechanism.** The inherited share service rejects inactive, expired, or exhausted shares. Before returning a file, it atomically increments the download count only while the share remains active, unexpired, and below its limit. The owner can deactivate a share; later requests fail. The research client checks the post-revocation response.
+
+**Example.** `IncrementDownloadCountAtomic` updates the count with SQL predicates for activity, expiry, and remaining downloads.
+
+**Why here.** This preserves SecuShare as the authority for whether a future API download is allowed.
+
+**Tradeoffs.** Revocation cannot erase a key or plaintext already copied by a recipient. The index does not revoke local records or cached content.
+
+**Code and ownership.** [`share_service.go`](backend/internal/service/share_service.go#L270) `GetFile`, [`share_repository.go`](backend/internal/repository/share_repository.go#L105) `IncrementDownloadCountAtomic`, [`share_handler.go`](backend/internal/handler/share_handler.go#L324) `DownloadFile`, and [`app_client.py`](research/semantic-sharing/src/semshare/app_client.py#L222) `deactivate_share`. Inherited app behavior and extension-side check.
+
+</details>
+
+<a id="technique-bounded-index-record"></a>
+
+<details>
+<summary>Fixed-size index record packing</summary>
+
+**Mechanism.** The workflow packs the 384 float values as little-endian float32, base64-encodes that vector and key fields into compact JSON, and checks that the complete record fits one 4 KiB ORAM block. It stores plaintext and ciphertext hashes with the file and share references.
+
+**Example.** `struct.pack(f"<{DIMENSION}f", *vector)` fixes the vector byte layout before the JSON record is measured.
+
+**Why here.** One bounded record lets the ORAM client keep each document reference and vector in one encrypted block.
+
+**Tradeoffs.** The fixed dimension and one-block limit reject larger records. Base64 and JSON add bytes over a binary record format.
+
+**Code and ownership.** [`workflow.py`](research/semantic-sharing/src/semshare/workflow.py#L56) `create_index_record`. Extension.
+
+</details>
+
+<a id="technique-model-mean-pooling"></a>
+
+<details>
+<summary>Masked mean pooling and vector normalization</summary>
+
+**Mechanism.** The local encoder tokenizes batches with padding and truncates them at 256 tokens. It multiplies the final hidden states by the attention mask, averages only unmasked token positions, then L2-normalizes each 384-value vector. Inference runs on CPU in inference mode with a locally verified pinned model.
+
+**Example.** `(hidden * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1)` excludes padding from the pooled sentence vector.
+
+**Why here.** The client needs a repeatable local vector for each verified document and query.
+
+**Tradeoffs.** Text after the token limit does not affect the vector. The model dependency determines the learned representation and remains part of the trusted client.
+
+**Code and ownership.** [`encoder.py`](research/semantic-sharing/src/semshare/encoder.py#L16) `SentenceEncoder` and [`encoder.py`](research/semantic-sharing/src/semshare/encoder.py#L32) `encode`. Mixed: extension and pinned model dependency.
+
+</details>
+
+<a id="technique-full-tree-snapshot"></a>
+
+<details>
+<summary>Authenticated full-tree read-only snapshots</summary>
+
+**Mechanism.** `records()` calls `_snapshot`, which visits every bucket object in numeric tree order, decrypts every slot, checks block placement and duplicate IDs, then checks that the union of remote blocks and stash matches the position map. It returns records without changing the manifest revision or writing buckets.
+
+**Example.** `Workspace.search` gets candidates from `base.records()` and `delta.records()` before it scores the query.
+
+**Why here.** A full snapshot gives the exact search path every candidate while keeping the read operation non-mutating.
+
+**Tradeoffs.** Each query reads the full tree, including empty buckets. Sidecars observe the full-tree request trace, and this does not hide the query from the trusted client.
+
+**Code and ownership.** [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L354) `records`, [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L363) `_snapshot`, and [`workspace.py`](research/semantic-sharing/src/semshare/workspace.py#L84) `search`. Extension.
+
+</details>
+
+<a id="technique-fixed-slot-aead"></a>
+
+<details>
+<summary>Padded fixed-slot authenticated buckets</summary>
+
+**Mechanism.** Each logical record stores a block ID, a four-byte length and up to 4 KiB of payload inside an AES-GCM slot with a fresh nonce and fixed associated data. The client pads the payload and fills every bucket's four slots with encrypted dummy records. Decryption checks the tag, slot size, encoded length and zero padding.
+
+**Example.** A short payload and a full payload both occupy one `SLOT_BYTES` slot; the unused payload bytes are zero before encryption.
+
+**Why here.** Fixed slot lengths hide per-bucket occupancy from a sidecar that sees only stored bytes.
+
+**Tradeoffs.** Padding consumes storage and transfer bytes. It does not hide tree capacity or which object IDs the client requests.
+
+**Code and ownership.** [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L453) `_encrypt_block`, [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L460) `_dummy_slot`, and [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L463) `_decrypt_block`. Mixed: extension and AES-GCM dependency.
+
+</details>
+
+<a id="technique-authenticated-manifest"></a>
+
+<details>
+<summary>Authenticated manifest validation and atomic replacement</summary>
+
+**Mechanism.** The client serializes the position map, object IDs, stash, references and revision, encrypts the manifest with AES-GCM and fixed associated data, writes a pending file, flushes and `fsync`s it, then replaces the active manifest with `os.replace`. Loading authenticates before JSON parsing and validates schema, capacities, IDs, references and stash bounds.
+
+**Example.** The active path is replaced only after the complete encrypted pending file has been flushed.
+
+**Why here.** ORAM operations need recoverable client state that matches the committed encrypted buckets.
+
+**Tradeoffs.** The local manifest and key remain on the trusted client. File replacement does not make the remote sidecar pair and local manifest one distributed transaction.
+
+**Code and ownership.** [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L482) `_save_state` and [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L496) `_load_state`. Mixed: extension and AES-GCM dependency.
+
+</details>
+
+<a id="technique-client-state-lock"></a>
+
+<details>
+<summary>Bounded process and file locking</summary>
+
+**Mechanism.** `FileLock` first acquires a process-local reentrant lock, then obtains an exclusive OS file lock. It retries a non-blocking lock attempt until a monotonic deadline and releases both locks when the operation ends.
+
+**Example.** If the lock is still held after its timeout, the caller raises `ORAMError` and does not proceed with stale position-map or stash state.
+
+**Why here.** Search and ORAM mutations share local manifests and client-owned position maps.
+
+**Tradeoffs.** A busy operation aborts after the timeout rather than waiting indefinitely. The lock coordinates processes on the same host and filesystem; it is not a distributed lock service.
+
+**Code and ownership.** [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L166) `FileLock`, [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L176) `__enter__`, and [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L210) `__exit__`. Extension.
+
+</details>
+
+<a id="technique-bounded-sidecar-transport"></a>
+
+<details>
+<summary>Pooled HTTP with strict sidecar frame bounds</summary>
+
+**Mechanism.** Each `Sidecar` reuses one HTTPX client with a two-second timeout, environment proxies disabled and redirects disabled. The client accepts only loopback URLs, rejects encoded responses, reads raw response chunks only up to one bucket plus one byte, and requires exact bucket lengths on `GET` and `PUT`. The server requires a decimal `Content-Length` within its object limit and rejects short bodies.
+
+**Example.** A response of `BUCKET_BYTES + 1` is rejected instead of accumulated without a bound.
+
+**Why here.** Persistent local requests avoid rebuilding a transport per bucket while keeping payload framing bounded.
+
+**Tradeoffs.** The protocol requires fixed-size bucket payloads and ordinary content-length framing. It is a loopback object API without remote transport authentication.
+
+**Code and ownership.** [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L47) `Sidecar`, [`oram.py`](research/semantic-sharing/src/semshare/oram.py#L78) `request`, and [`sidecar.py`](research/semantic-sharing/src/semshare/sidecar.py#L85) `Handler.do_PUT`. Mixed: extension and HTTPX transport dependency.
+
+</details>
+
+<a id="technique-atomic-sidecar-object-write"></a>
+
+<details>
+<summary>Atomic no-overwrite sidecar object publication</summary>
+
+**Mechanism.** `ObjectStore.put` validates the object length and refuses an existing target. It writes to a temporary file in the same directory, flushes and `fsync`s the bytes, then hard-links the completed temporary file to the final random object name. The `finally` block removes the temporary name.
+
+**Example.** Concurrent writers for one object ID cannot replace a previously published object; the link operation fails if the target already exists.
+
+**Why here.** Readers should see either no object or the completed object, including when two requests race for the same ID.
+
+**Tradeoffs.** The filesystem must support same-directory hard links. This protects one sidecar object write, not atomic publication across both sidecars.
+
+**Code and ownership.** [`sidecar.py`](research/semantic-sharing/src/semshare/sidecar.py#L17) `ObjectStore` and [`sidecar.py`](research/semantic-sharing/src/semshare/sidecar.py#L27) `put`. Extension.
+
+</details>
+
+<a id="technique-owned-run-lifecycle"></a>
+
+<details>
+<summary>Owned-process launch and identity-checked cleanup</summary>
+
+**Mechanism.** `start` refuses reused run and evidence directories, writes run-specific state, launches the app and two sidecars with isolated storage and caches, then waits for health checks. A launch failure stops the children it started. `cleanup` verifies each remaining PID still matches the recorded executable or sidecar arguments, copies logs to retained evidence, and removes only the run directory.
+
+**Example.** Before forced termination, `_is_owned` checks the process identity again so a reused PID is not killed as if it were the original child.
+
+**Why here.** The verification workflow owns disposable services and data while preserving logs after cleanup.
+
+**Tradeoffs.** Process identity inspection is platform-specific. This lifecycle controls only the recorded local run and does not sandbox the host.
+
+**Code and ownership.** [`lifecycle.py`](research/semantic-sharing/src/semshare/lifecycle.py#L33) `start`, [`lifecycle.py`](research/semantic-sharing/src/semshare/lifecycle.py#L187) `cleanup`, and [`lifecycle.py`](research/semantic-sharing/src/semshare/lifecycle.py#L303) `_is_owned`. Extension.
+
+</details>
